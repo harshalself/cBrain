@@ -1,0 +1,86 @@
+import api from './api';
+import {
+    Agent,
+    CreateAgentDto,
+    UpdateAgentDto,
+    TrainingAnalytics,
+    TrainingStatusResponse,
+    TrainAgentDto,
+} from '@/types/agent.types';
+
+class AgentService {
+    private basePath = '/agents';
+
+    /**
+     * Get all agents for the authenticated user
+     */
+    async getAgents(): Promise<Agent[]> {
+        const response = await api.get(this.basePath);
+        return response.data.data;
+    }
+
+    /**
+     * Get agent by ID
+     */
+    async getAgent(id: number): Promise<Agent> {
+        const response = await api.get(`${this.basePath}/${id}`);
+        return response.data.data;
+    }
+
+    /**
+     * Create a new agent
+     */
+    async createAgent(data: CreateAgentDto): Promise<Agent> {
+        const response = await api.post(this.basePath, data);
+        return response.data.data;
+    }
+
+    /**
+     * Update an existing agent
+     */
+    async updateAgent(id: number, data: UpdateAgentDto): Promise<Agent> {
+        const response = await api.put(`${this.basePath}/${id}`, data);
+        return response.data.data;
+    }
+
+    /**
+     * Delete an agent (soft delete)
+     */
+    async deleteAgent(id: number): Promise<void> {
+        await api.delete(`${this.basePath}/${id}`);
+    }
+
+    /**
+     * Train an agent with documents
+     */
+    async trainAgent(id: number, data?: TrainAgentDto): Promise<void> {
+        await api.post(`${this.basePath}/${id}/train`, data || {});
+    }
+
+    /**
+     * Retrain an existing agent
+     */
+    async retrainAgent(id: number, data?: TrainAgentDto): Promise<void> {
+        await api.post(`${this.basePath}/${id}/retrain`, data || {});
+    }
+
+    /**
+     * Get training status for an agent
+     */
+    async getTrainingStatus(id: number): Promise<TrainingStatusResponse> {
+        const response = await api.get(`${this.basePath}/${id}/training-status`);
+        return response.data.data;
+    }
+
+    /**
+     * Get training analytics for an agent
+     */
+    async getTrainingAnalytics(id: number): Promise<TrainingAnalytics> {
+        const response = await api.get(`${this.basePath}/${id}/training-analytics`);
+        return response.data.data;
+    }
+}
+
+// Export singleton instance
+export const agentService = new AgentService();
+export default agentService;
