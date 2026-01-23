@@ -213,6 +213,35 @@ class DocumentController {
             next(error);
         }
     };
+
+    /**
+     * Get version history for a document
+     */
+    public getVersionHistory = async (
+        req: RequestWithUser,
+        res: Response,
+        next: NextFunction
+    ): Promise<void> => {
+        try {
+            const id = parseInt(req.params.id);
+
+            if (isNaN(id)) {
+                throw new HttpException(400, "Invalid document ID");
+            }
+
+            const versions = await this.documentService.getVersionHistory(id);
+
+            res.status(200).json(
+                ResponseUtil.success("Version history retrieved successfully", {
+                    document_id: id,
+                    total_versions: versions.length,
+                    versions: versions,
+                })
+            );
+        } catch (error) {
+            next(error);
+        }
+    };
 }
 
 export default DocumentController;

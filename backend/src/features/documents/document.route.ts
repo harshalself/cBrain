@@ -59,6 +59,13 @@ class DocumentRoute implements Route {
             `${this.path}/:id/move`,
             this.documentController.moveDocument
         );
+
+        // Get version history for a document
+        this.router.get(
+            `${this.path}/:id/versions`,
+            validationMiddleware(DocumentParamsDto, "params", false, []),
+            this.documentController.getVersionHistory
+        );
     }
 }
 

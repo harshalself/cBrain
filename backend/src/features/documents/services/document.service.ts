@@ -11,6 +11,8 @@ import { FileUploadResult, extractInsertedId } from "../../../utils/fileupload";
 class DocumentService {
     /**
      * Upload a document to the Knowledge Base
+     * Implements versioning: if a document with the same name exists in the same folder,
+     * the version is auto-incremented per PRD FR-3.3
      */
     public async uploadDocument(
         uploadResult: FileUploadResult,
@@ -39,10 +41,46 @@ class DocumentService {
                 file_type = "txt";
             }
 
+            const documentName = metadata.name || "Untitled Document";
+            const folderId = metadata.folder_id;
+
+            // Check for existing document with same name in the same folder (versioning)
+            let existingDocument = null;
+            let newVersion = 1;
+            let isUpdate = false;
+
+            const existingQuery = knex("documents")
+                .where({ name: documentName });
+
+            // Handle folder_id - null means root folder
+            if (folderId !== undefined && folderId !== null) {
+                existingQuery.where({ folder_id: folderId });
+            } else {
+                existingQuery.whereNull("folder_id");
+            }
+
+            existingDocument = await existingQuery
+                .orderBy("version", "desc")
+                .first();
+
+            if (existingDocument) {
+                // Document with same name exists - this is a version update
+                newVersion = (existingDocument.version || 1) + 1;
+                isUpdate = true;
+
+                // Archive the old version by marking it (optional: you could also delete old embeddings here)
+                await knex("documents")
+                    .where({ id: existingDocument.id })
+                    .update({
+                        status: "archived",
+                        updated_at: knex.fn.now(),
+                    });
+            }
+
             const document: CreateDocumentRequest = {
-                name: metadata.name || "Untitled Document",
+                name: documentName,
                 original_name: metadata.name || "unknown",
-                folder_id: metadata.folder_id,
+                folder_id: folderId,
                 file_type,
                 file_size: uploadResult.size || 0,
                 file_path: uploadResult.Location,
@@ -50,6 +88,7 @@ class DocumentService {
                 metadata: {
                     contentType: mimeType,
                     uploadedAt: new Date().toISOString(),
+                    previousVersion: isUpdate ? existingDocument?.id : undefined,
                 },
             };
 
@@ -60,7 +99,7 @@ class DocumentService {
                     upload_date: knex.fn.now(),
                     last_updated: knex.fn.now(),
                     status: "ready", // Mark as ready since no processing needed yet
-                    version: 1,
+                    version: newVersion,
                     chunk_count: 0,
                     created_at: knex.fn.now(),
                     updated_at: knex.fn.now(),
@@ -70,18 +109,26 @@ class DocumentService {
 
             const insertedDocument = Array.isArray(result) ? result[0] : result;
 
-            // Broadcast notification to all users about new document
+            // Broadcast notification to all users about new/updated document
             try {
                 const NotificationService = require("../../notifications/notification.service").default;
                 const notificationService = new NotificationService();
 
+                const notificationType = isUpdate ? 'document_update' : 'document_upload';
+                const notificationMessage = isUpdate
+                    ? `Document updated: ${insertedDocument.name} (v${newVersion})`
+                    : `New document uploaded: ${insertedDocument.name}`;
+
                 await notificationService.broadcastNotification({
-                    type: 'document_upload',
-                    message: `New document uploaded: ${insertedDocument.name}`,
+                    type: notificationType,
+                    message: notificationMessage,
                     metadata: {
                         document_id: insertedDocument.id,
                         document_name: insertedDocument.name,
                         file_type: insertedDocument.file_type,
+                        version: newVersion,
+                        is_update: isUpdate,
+                        previous_version_id: isUpdate ? existingDocument?.id : undefined,
                     },
                     except_user_id: userId, // Don't notify the uploader
                 });
@@ -249,6 +296,39 @@ class DocumentService {
             throw new HttpException(
                 500,
                 `Error deleting document: ${error.message}`
+            );
+        }
+    }
+
+    /**
+     * Get version history for a document
+     * Returns all versions of documents with the same name in the same folder
+     */
+    public async getVersionHistory(documentId: number): Promise<IDocument[]> {
+        try {
+            // Get the document to find its name and folder
+            const document = await this.getDocumentById(documentId);
+
+            // Find all documents with the same name in the same folder
+            let query = knex("documents")
+                .where({ name: document.name });
+
+            if (document.folder_id !== null && document.folder_id !== undefined) {
+                query = query.where({ folder_id: document.folder_id });
+            } else {
+                query = query.whereNull("folder_id");
+            }
+
+            const versions = await query
+                .orderBy("version", "desc")
+                .select("*");
+
+            return versions as IDocument[];
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new HttpException(
+                500,
+                `Error fetching version history: ${error.message}`
             );
         }
     }

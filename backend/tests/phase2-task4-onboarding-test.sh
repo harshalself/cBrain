@@ -36,7 +36,8 @@ echo "----------------------------------------------------------"
 TEMPLATE_RESPONSE=$(curl -s -X GET "$API_URL/onboarding/template" \
   -H "Authorization: Bearer $TOKEN")
 
-echo "Response: $TEMPLATE_RESPONSE" | jq '.'
+echo "Response:"
+echo "$TEMPLATE_RESPONSE" | jq '.'
 echo ""
 
 if echo "$TEMPLATE_RESPONSE" | jq -e '.success == true' > /dev/null 2>&1; then
@@ -81,7 +82,8 @@ UPDATE_TEMPLATE=$(curl -s -X PUT "$API_URL/onboarding/template" \
     "is_active": true
   }')
 
-echo "Response: $UPDATE_TEMPLATE" | jq '.'
+echo "Response:"
+echo "$UPDATE_TEMPLATE" | jq '.'
 echo ""
 
 if echo "$UPDATE_TEMPLATE" | jq -e '.success == true' > /dev/null 2>&1; then
@@ -97,7 +99,8 @@ echo "----------------------------------------------------------"
 STATUS_RESPONSE=$(curl -s -X GET "$API_URL/onboarding/status" \
   -H "Authorization: Bearer $TOKEN")
 
-echo "Response: $STATUS_RESPONSE" | jq '.'
+echo "Response:"
+echo "$STATUS_RESPONSE" | jq '.'
 echo ""
 
 if echo "$STATUS_RESPONSE" | jq -e '.success == true' > /dev/null 2>&1; then
@@ -125,7 +128,8 @@ if [ "$IS_COMPLETED" = "false" ]; then
       \"section_day\": 1
     }")
   
-  echo "Response: $COMPLETE_RESPONSE" | jq '.'
+  echo "Response:"
+  echo "$COMPLETE_RESPONSE" | jq '.'
   echo ""
   
   if echo "$COMPLETE_RESPONSE" | jq -e '.success == true' > /dev/null 2>&1; then
@@ -143,7 +147,8 @@ echo "----------------------------------------------------------"
 ALL_USERS_RESPONSE=$(curl -s -X GET "$API_URL/onboarding/all-users" \
   -H "Authorization: Bearer $TOKEN")
 
-echo "Response: $ALL_USERS_RESPONSE" | jq '.'
+echo "Response:"
+echo "$ALL_USERS_RESPONSE" | jq '.'
 echo ""
 
 if echo "$ALL_USERS_RESPONSE" | jq -e '.success == true' > /dev/null 2>&1; then
