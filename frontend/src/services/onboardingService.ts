@@ -5,6 +5,9 @@ export interface OnboardingSection {
     title: string;
     description?: string;
     document_ids?: number[];
+    // Frontend-only fields for display
+    id?: number;
+    documents?: Array<{ title: string; url: string }>;
 }
 
 export interface OnboardingTemplate {
@@ -27,6 +30,8 @@ export interface OnboardingProgress {
     started_at: string;
     completed_at: string | null;
     is_completed: boolean;
+    // Frontend computed field
+    progress_percentage?: number;
 }
 
 export interface OnboardingStatus {

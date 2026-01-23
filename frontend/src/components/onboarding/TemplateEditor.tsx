@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { onboardingService, OnboardingTemplate } from '@/services/onboardingService';
+import { onboardingService, OnboardingTemplate, OnboardingSection } from '@/services/onboardingService';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -36,14 +36,6 @@ import {
 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
-interface Section {
-    id: number;
-    title: string;
-    description: string;
-    order: number;
-    documents?: Array<{ title: string; url: string }>;
-}
-
 export default function TemplateEditor() {
     const { toast } = useToast();
     const [template, setTemplate] = useState<OnboardingTemplate | null>(null);
@@ -52,7 +44,7 @@ export default function TemplateEditor() {
 
     // Section modal state
     const [showSectionModal, setShowSectionModal] = useState(false);
-    const [editingSection, setEditingSection] = useState<Section | null>(null);
+    const [editingSection, setEditingSection] = useState<OnboardingSection | null>(null);
     const [sectionForm, setSectionForm] = useState({
         title: '',
         description: '',
@@ -60,7 +52,7 @@ export default function TemplateEditor() {
     });
 
     // Delete confirmation
-    const [deleteSection, setDeleteSection] = useState<Section | null>(null);
+    const [deleteSection, setDeleteSection] = useState<OnboardingSection | null>(null);
 
     useEffect(() => {
         loadTemplate();
@@ -110,7 +102,7 @@ export default function TemplateEditor() {
         setShowSectionModal(true);
     };
 
-    const openEditSection = (section: Section) => {
+    const openEditSection = (section: OnboardingSection) => {
         setEditingSection(section);
         setSectionForm({
             title: section.title,
@@ -130,20 +122,21 @@ export default function TemplateEditor() {
                 return {
                     ...prev,
                     sections: prev.sections?.map(s =>
-                        s.id === editingSection.id
-                            ? { ...s, ...sectionForm }
+                        s.day === editingSection.day
+                            ? { ...s, title: sectionForm.title, description: sectionForm.description, documents: sectionForm.documents }
                             : s
                     ),
                 };
             });
         } else {
             // Add new section
-            const newSection: Section = {
-                id: Date.now(),
+            const newSection: OnboardingSection = {
+                day: (template?.sections?.length || 0) + 1,
                 title: sectionForm.title,
                 description: sectionForm.description,
-                order: (template?.sections?.length || 0) + 1,
                 documents: sectionForm.documents,
+                id: Date.now(), // Frontend only
+                document_ids: [],
             };
             setTemplate(prev => {
                 if (!prev) return prev;
@@ -165,7 +158,7 @@ export default function TemplateEditor() {
             if (!prev) return prev;
             return {
                 ...prev,
-                sections: prev.sections?.filter(s => s.id !== deleteSection.id),
+                sections: prev.sections?.filter(s => s.day !== deleteSection.day),
             };
         });
 
@@ -239,7 +232,7 @@ export default function TemplateEditor() {
                     </Card>
                 ) : (
                     template?.sections?.map((section, index) => (
-                        <Card key={section.id} className="relative">
+                        <Card key={section.day} className="relative">
                             <CardHeader className="pb-2">
                                 <div className="flex items-start gap-4">
                                     <div className="flex-shrink-0 flex items-center gap-2">

@@ -35,12 +35,15 @@ export default function OnboardingWizard() {
     const loadOnboardingData = async () => {
         try {
             setIsLoading(true);
-            const [templateData, progressData] = await Promise.all([
+            const [templateData, statusData] = await Promise.all([
                 onboardingService.getTemplate(),
                 onboardingService.getStatus(),
             ]);
             setTemplate(templateData);
-            setProgress(progressData);
+            // Extract progress from status
+            if (statusData.progress) {
+                setProgress(statusData.progress);
+            }
         } catch (error) {
             console.error('Failed to load onboarding data:', error);
             toast({
@@ -53,22 +56,17 @@ export default function OnboardingWizard() {
         }
     };
 
-    const handleCompleteSection = async (sectionId: number) => {
-        setCompletingSection(sectionId);
+    const handleCompleteSection = async (sectionDay: number) => {
+        if (!template) return;
+        setCompletingSection(sectionDay);
         try {
-            await onboardingService.completeSection({ section_id: sectionId });
+            const updatedProgress = await onboardingService.completeSection({
+                template_id: template.id,
+                section_day: sectionDay,
+            });
 
             // Update local progress
-            setProgress(prev => {
-                if (!prev) return prev;
-                const newCompleted = [...(prev.completed_sections || []), sectionId];
-                const totalSections = template?.sections?.length || 1;
-                return {
-                    ...prev,
-                    completed_sections: newCompleted,
-                    progress_percentage: Math.round((newCompleted.length / totalSections) * 100),
-                };
-            });
+            setProgress(updatedProgress);
 
             toast({
                 title: 'Section completed!',
@@ -110,13 +108,13 @@ export default function OnboardingWizard() {
         }
     };
 
-    const isSectionCompleted = (sectionId: number) => {
-        return progress?.completed_sections?.includes(sectionId) || false;
+    const isSectionCompleted = (sectionDay: number) => {
+        return progress?.completed_sections?.includes(sectionDay) || false;
     };
 
     const allSectionsCompleted = () => {
         if (!template?.sections || !progress?.completed_sections) return false;
-        return template.sections.every(s => progress.completed_sections.includes(s.id));
+        return template.sections.every(s => progress.completed_sections.includes(s.day));
     };
 
     if (isLoading) {
@@ -131,7 +129,7 @@ export default function OnboardingWizard() {
     }
 
     // All complete state
-    if (progress?.is_complete) {
+    if (progress?.is_completed) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-secondary/20">
                 <Card className="max-w-md text-center">
@@ -177,9 +175,14 @@ export default function OnboardingWizard() {
                     <CardContent className="pt-6">
                         <div className="flex items-center justify-between mb-4">
                             <span className="text-sm font-medium">Your Progress</span>
-                            <Badge variant="secondary">{progress?.progress_percentage || 0}%</Badge>
+                            <Badge variant="secondary">
+                                {Math.round((progress?.completed_sections?.length || 0) / (template?.sections?.length || 1) * 100)}%
+                            </Badge>
                         </div>
-                        <Progress value={progress?.progress_percentage || 0} className="h-2" />
+                        <Progress
+                            value={Math.round((progress?.completed_sections?.length || 0) / (template?.sections?.length || 1) * 100)}
+                            className="h-2"
+                        />
                         <p className="text-xs text-muted-foreground mt-2">
                             {progress?.completed_sections?.length || 0} of {template?.sections?.length || 0} sections completed
                         </p>
@@ -189,19 +192,19 @@ export default function OnboardingWizard() {
                 {/* Sections */}
                 <div className="space-y-4">
                     {template?.sections?.map((section, index) => {
-                        const isCompleted = isSectionCompleted(section.id);
-                        const isCompletingThis = completingSection === section.id;
+                        const isCompleted = isSectionCompleted(section.day);
+                        const isCompletingThis = completingSection === section.day;
 
                         return (
                             <Card
-                                key={section.id}
+                                key={section.day}
                                 className={`transition-all ${isCompleted ? 'border-green-500/50 bg-green-50/50 dark:bg-green-950/20' : ''}`}
                             >
                                 <CardHeader className="pb-2">
                                     <div className="flex items-start gap-4">
                                         <div className={`flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center ${isCompleted
-                                                ? 'bg-green-500 text-white'
-                                                : 'bg-secondary text-muted-foreground'
+                                            ? 'bg-green-500 text-white'
+                                            : 'bg-secondary text-muted-foreground'
                                             }`}>
                                             {isCompleted ? (
                                                 <CheckCircle2 className="w-5 h-5" />
@@ -240,7 +243,7 @@ export default function OnboardingWizard() {
                                     {/* Complete Button */}
                                     {!isCompleted && (
                                         <Button
-                                            onClick={() => handleCompleteSection(section.id)}
+                                            onClick={() => handleCompleteSection(section.day)}
                                             disabled={isCompletingThis}
                                             className="mt-2"
                                         >
