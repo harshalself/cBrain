@@ -50,11 +50,12 @@ class AnalyticsEventService {
         created_at: new Date(),
       });
 
-      logger.info("📊 User activity tracked", {
-        userId: event.userId,
-        eventType: event.eventType,
-        sessionId: event.sessionId,
-      });
+      // Silenced to reduce log noise - data still being tracked in database
+      // logger.info("📊 User activity tracked", {
+      //   userId: event.userId,
+      //   eventType: event.eventType,
+      //   sessionId: event.sessionId,
+      // });
     } catch (error) {
       logger.error("❌ Failed to track user activity", {
         error: error.message,

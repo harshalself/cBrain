@@ -5,7 +5,7 @@ import validateEnv from "./utils/validateEnv";
 import ChatRoute from "./features/chat/chat.route";
 import UserRoute from "./features/user/user.route";
 import DocumentRoute from "./features/documents/document.route";
-// Removed agent routes (services kept for AI config)
+import AgentRoute from "./features/agent/agent.route";
 import BaseSourceRoute from "./features/source/source.route";
 import FileSourceRoute from "./features/source/file/file-source.route";
 // Removed: TextSourceRoute, WebsiteSourceRoute, DatabaseSourceRoute, QASourceRoute
@@ -72,7 +72,7 @@ async function bootstrap() {
       new NotificationRoute(),
       new InvitationRoute(),
       new OnboardingRoute(),
-      // Removed: new AgentRoute()
+      new AgentRoute(),
       new BaseSourceRoute(),
       new FileSourceRoute(),
       new ProviderModelRoute(),
