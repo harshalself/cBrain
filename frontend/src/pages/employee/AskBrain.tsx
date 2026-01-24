@@ -18,6 +18,7 @@ const AskBrain: React.FC = () => {
     const [isLoading, setIsLoading] = useState(true);
     const [isCreatingSession, setIsCreatingSession] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [agentNotConfigured, setAgentNotConfigured] = useState(false);
 
     // Chat state
     const [sessions, setSessions] = useState<ChatSessionWithSummary[]>([]);
@@ -56,8 +57,13 @@ const AskBrain: React.FC = () => {
             }
         } catch (err: any) {
             const errorMsg = err.response?.data?.message || 'Failed to load conversations';
-            setError(errorMsg);
-            toast.error(errorMsg);
+            // Check if error is due to agent not existing
+            if (errorMsg.includes('Agent not found') || err.response?.status === 404) {
+                setAgentNotConfigured(true);
+            } else {
+                setError(errorMsg);
+                toast.error(errorMsg);
+            }
         } finally {
             setIsLoading(false);
         }
@@ -204,6 +210,36 @@ const AskBrain: React.FC = () => {
                     <div className="text-center">
                         <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
                         <p className="text-muted-foreground">Loading conversations...</p>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+
+    // Agent not configured state
+    if (agentNotConfigured) {
+        return (
+            <div className="min-h-screen flex flex-col">
+                <DashboardHeader title="Ask cBrain" user={user} />
+                <div className="flex-1 flex items-center justify-center">
+                    <div className="text-center max-w-md px-6">
+                        <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 mx-auto flex items-center justify-center mb-6">
+                            <Brain className="w-10 h-10 text-amber-500" />
+                        </div>
+                        <h3 className="text-2xl font-bold mb-3">AI Assistant Not Ready Yet</h3>
+                        <p className="text-muted-foreground mb-6">
+                            The AI assistant hasn't been configured by your administrator yet.
+                            Please check back later or contact your admin to set up the knowledge base.
+                        </p>
+                        <div className="glass rounded-xl p-4 text-left">
+                            <p className="text-sm font-medium text-foreground mb-2">What happens next?</p>
+                            <ul className="text-sm text-muted-foreground space-y-1">
+                                <li>• Admin creates an AI agent</li>
+                                <li>• Knowledge documents are uploaded</li>
+                                <li>• Agent is trained on company data</li>
+                                <li>• You can start asking questions!</li>
+                            </ul>
+                        </div>
                     </div>
                 </div>
             </div>

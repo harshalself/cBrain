@@ -3,13 +3,15 @@ import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { User } from '@/types';
 import NotificationBell from '@/components/notifications/NotificationBell';
+import { ProfileDropdown } from './ProfileDropdown';
 
 interface DashboardHeaderProps {
     title: string;
     user: User;
+    onLogout?: () => void;
 }
 
-export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ title, user }) => {
+export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ title, user, onLogout }) => {
     return (
         <header className="sticky top-0 z-30 bg-background/95 backdrop-blur-lg border-b border-border">
             <div className="flex items-center justify-between px-6 lg:px-8 py-4">
@@ -33,9 +35,9 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ title, user })
                     {/* Notifications */}
                     <NotificationBell />
 
-                    {/* User Avatar (desktop only) */}
-                    <div className="hidden lg:flex items-center gap-3 pl-4 border-l border-border">
-                        <img src={user.avatar} alt={user.name} className="w-9 h-9 rounded-full" />
+                    {/* User Profile Dropdown (desktop only) */}
+                    <div className="hidden lg:block pl-4 border-l border-border">
+                        <ProfileDropdown user={user} onLogout={onLogout} />
                     </div>
                 </div>
             </div>

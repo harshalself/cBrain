@@ -196,6 +196,9 @@ class AnalyticsService {
      * Helper: Transform behavior insights to PopularQuestion format
      */
     transformToPopularQuestions(insights: BehaviorInsights): PopularQuestion[] {
+        if (!insights || !insights.common_queries) {
+            return [];
+        }
         return insights.common_queries.map(q => ({
             question: q.query,
             count: q.frequency,
@@ -207,6 +210,9 @@ class AnalyticsService {
      * Helper: Transform popular topics to PopularQuestion format
      */
     transformTopicsToQuestions(insights: BehaviorInsights): PopularQuestion[] {
+        if (!insights || !insights.popular_topics) {
+            return [];
+        }
         return insights.popular_topics.map(t => ({
             question: t.topic,
             count: t.count,

@@ -102,19 +102,19 @@ export default function OnboardingStatus() {
         <div className="space-y-6">
             {/* Stats */}
             <div className="grid grid-cols-4 gap-4">
-                <div className="glass rounded-xl p-4">
+                <div key="total" className="glass rounded-xl p-4">
                     <p className="text-sm text-muted-foreground">Total Users</p>
                     <p className="text-2xl font-bold">{stats.total}</p>
                 </div>
-                <div className="glass rounded-xl p-4">
+                <div key="completed" className="glass rounded-xl p-4">
                     <p className="text-sm text-muted-foreground">Completed</p>
                     <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
                 </div>
-                <div className="glass rounded-xl p-4">
+                <div key="in-progress" className="glass rounded-xl p-4">
                     <p className="text-sm text-muted-foreground">In Progress</p>
                     <p className="text-2xl font-bold text-yellow-600">{stats.inProgress}</p>
                 </div>
-                <div className="glass rounded-xl p-4">
+                <div key="not-started" className="glass rounded-xl p-4">
                     <p className="text-sm text-muted-foreground">Not Started</p>
                     <p className="text-2xl font-bold text-muted-foreground">{stats.notStarted}</p>
                 </div>

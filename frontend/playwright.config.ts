@@ -25,7 +25,7 @@ export default defineConfig({
     // Shared settings for all tests
     use: {
         // Base URL for navigation
-        baseURL: 'http://localhost:5173',
+        baseURL: 'http://localhost:8080',
 
         // Take screenshot on failure
         screenshot: 'only-on-failure',
@@ -46,9 +46,10 @@ export default defineConfig({
     ],
 
     // Run your dev server before starting the tests
-    webServer: {
-        command: 'npm run dev',
-        url: 'http://localhost:5173',
-        reuseExistingServer: !process.env.CI,
-    },
+    // Disabled - servers already running manually
+    // webServer: {
+    //     command: 'npm run dev',
+    //     url: 'http://localhost:5173',
+    //     reuseExistingServer: !process.env.CI,
+    // },
 });

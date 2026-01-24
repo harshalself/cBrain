@@ -233,14 +233,14 @@ const Analytics: React.FC = () => {
                                 <BarChart3 className="h-4 w-4 text-muted-foreground" />
                                 <p className="text-sm text-muted-foreground">7-Day Retention</p>
                             </div>
-                            <p className="text-2xl font-bold text-green-600">{retentionMetrics.retention_rate_7d.toFixed(1)}%</p>
+                            <p className="text-2xl font-bold text-green-600">{(retentionMetrics.retention_rate_7d || 0).toFixed(1)}%</p>
                         </div>
                         <div className="glass rounded-xl p-4">
                             <div className="flex items-center gap-2 mb-2">
                                 <AlertTriangle className="h-4 w-4 text-muted-foreground" />
                                 <p className="text-sm text-muted-foreground">Churn Rate</p>
                             </div>
-                            <p className="text-2xl font-bold text-red-600">{retentionMetrics.churn_rate.toFixed(1)}%</p>
+                            <p className="text-2xl font-bold text-red-600">{(retentionMetrics.churn_rate || 0).toFixed(1)}%</p>
                         </div>
                     </div>
                 )}

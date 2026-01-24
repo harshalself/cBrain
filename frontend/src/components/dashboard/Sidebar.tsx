@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Brain, LayoutDashboard, FileText, Users, BarChart3, LogOut, Menu, X, MessageCircle, User as UserIcon, BookOpen } from 'lucide-react';
+import { Brain, LayoutDashboard, FileText, Users, BarChart3, LogOut, Menu, X, MessageCircle, User as UserIcon, BookOpen, Bot, GraduationCap } from 'lucide-react';
 import { User } from '@/types';
 
 interface SidebarProps {
@@ -21,6 +21,8 @@ const navItems: NavItem[] = [
     { name: 'Overview', path: '/admin/overview', icon: LayoutDashboard, roles: ['admin'] },
     { name: 'Knowledge Base', path: '/admin/knowledge-base', icon: FileText, roles: ['admin'] },
     { name: 'Users', path: '/admin/users', icon: Users, roles: ['admin'] },
+    { name: 'Agents', path: '/admin/agents', icon: Bot, roles: ['admin'] },
+    { name: 'Onboarding', path: '/admin/onboarding', icon: GraduationCap, roles: ['admin'] },
     { name: 'Analytics', path: '/admin/analytics', icon: BarChart3, roles: ['admin'] },
     // Employee routes
     { name: 'Dashboard', path: '/employee/dashboard', icon: LayoutDashboard, roles: ['employee'] },

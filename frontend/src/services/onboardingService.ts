@@ -43,6 +43,19 @@ export interface OnboardingStatus {
     next_section?: OnboardingSection;
 }
 
+// Admin view: user onboarding status with user details
+export interface UserOnboardingStatus {
+    user_id: number;
+    name: string;
+    email: string;
+    is_complete: boolean;
+    progress_percentage: number;
+    completed_sections: number[];
+    total_sections: number;
+    started_at: string | null;
+    completed_at: string | null;
+}
+
 export const onboardingService = {
     // Get template
     getTemplate: async (): Promise<OnboardingTemplate> => {

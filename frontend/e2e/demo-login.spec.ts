@@ -48,11 +48,11 @@ test.describe('Login Flow Demo', () => {
         console.log('📍 Navigated to signin page');
 
         // Step 2: Fill in the email field
-        await page.fill('input[type="email"]', 'admin@cbrain.com');
+        await page.fill('input[type="email"]', 'admin@gmail.com');
         console.log('✍️ Filled email field');
 
         // Step 3: Fill in the password field
-        await page.fill('input[type="password"]', 'Admin@123');
+        await page.fill('input[type="password"]', '12345678');
         console.log('🔒 Filled password field');
 
         // Step 4: Click the submit button
@@ -84,7 +84,7 @@ test.describe('Login Flow Demo', () => {
         await page.goto('/signin');
 
         // Fill in wrong credentials
-        await page.fill('input[type="email"]', 'admin@cbrain.com');
+        await page.fill('input[type="email"]', 'admin@gmail.com');
         await page.fill('input[type="password"]', 'wrongpassword');
 
         // Click submit
@@ -107,16 +107,15 @@ test.describe('Login Flow Demo', () => {
     test('should display user name after login', async ({ page }) => {
         // Login first
         await page.goto('/signin');
-        await page.fill('input[type="email"]', 'admin@cbrain.com');
-        await page.fill('input[type="password"]', 'Admin@123');
+        await page.fill('input[type="email"]', 'admin@gmail.com');
+        await page.fill('input[type="password"]', '12345678');
         await page.click('button[type="submit"]');
 
         // Wait for redirect
         await page.waitForURL(/.*\/(admin|employee)/);
 
-        // Look for user name in the header/navbar
-        // This will depend on your actual implementation
-        const header = page.locator('header, nav');
+        // Look for the main header element (not sidebar nav)
+        const header = page.locator('header').first();
         await expect(header).toBeVisible();
 
         console.log('✅ User dashboard loaded with header!');
@@ -130,7 +129,7 @@ test.describe('Login Flow Demo', () => {
  * HOW TO RUN THESE TESTS:
  * 
  * 1. Make sure your backend is running on port 8000
- * 2. Make sure you have a user with email: admin@cbrain.com and password: Admin@123
+ * 2. Make sure you have a user with email: admin@gmail.com and password: 12345678
  * 3. Run: npm run test:e2e
  * 
  * WHAT HAPPENS:
