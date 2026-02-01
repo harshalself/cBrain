@@ -16,6 +16,12 @@ interface UserData {
     email: string;
     name: string;
     role: 'employee' | 'admin';
+    avatar?: string;
+    job_title?: string;
+    department?: string;
+    bio?: string;
+    created_at?: string;
+    last_login?: string;
 }
 
 export interface LoginResponse {
@@ -44,4 +50,9 @@ export const authService = {
         const response = await api.post('/users/login', data);
         return response.data;
     },
+
+    getProfile: async (): Promise<{ data: UserData }> => {
+        const response = await api.get('/users/me');
+        return response.data;
+    }
 };

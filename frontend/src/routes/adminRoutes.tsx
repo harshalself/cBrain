@@ -10,6 +10,9 @@ import Analytics from '@/pages/admin/Analytics';
 import AgentListPage from '@/pages/admin/agents/AgentListPage';
 import AgentFormPage from '@/pages/admin/agents/AgentFormPage';
 import OnboardingAdmin from '@/pages/admin/OnboardingAdmin';
+import { MessagesPage } from '@/pages/shared/Messages';
+import AskBrain from '@/pages/employee/AskBrain';
+import MyProfile from '@/pages/employee/MyProfile';
 
 export const adminRoutes: RouteObject = {
     path: '/admin',
@@ -28,5 +31,8 @@ export const adminRoutes: RouteObject = {
         { path: 'agents/new', element: <AgentFormPage /> },
         { path: 'agents/:id/edit', element: <AgentFormPage /> },
         { path: 'onboarding', element: <OnboardingAdmin /> },
+        { path: 'messages', element: <MessagesPage /> },
+        { path: 'ask', element: <AskBrain /> },
+        { path: 'profile', element: <MyProfile /> },
     ],
 };

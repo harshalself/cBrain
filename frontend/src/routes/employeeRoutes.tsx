@@ -7,6 +7,7 @@ import EmployeeDashboard from '@/pages/employee/EmployeeDashboard';
 import AskBrain from '@/pages/employee/AskBrain';
 import MyDocuments from '@/pages/employee/MyDocuments';
 import MyProfile from '@/pages/employee/MyProfile';
+import { MessagesPage } from '@/pages/shared/Messages';
 
 export const employeeRoutes: RouteObject = {
     path: '/employee',
@@ -21,5 +22,6 @@ export const employeeRoutes: RouteObject = {
         { path: 'ask', element: <AskBrain /> },
         { path: 'documents', element: <MyDocuments /> },
         { path: 'profile', element: <MyProfile /> },
+        { path: 'messages', element: <MessagesPage /> },
     ],
 };

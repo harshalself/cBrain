@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Brain, LayoutDashboard, FileText, Users, BarChart3, LogOut, Menu, X, MessageCircle, User as UserIcon, BookOpen, Bot, GraduationCap } from 'lucide-react';
+import { Brain, LayoutDashboard, FileText, Users, BarChart3, LogOut, Menu, X, MessageCircle, User as UserIcon, BookOpen, Bot, GraduationCap, MessageSquare } from 'lucide-react';
 import { User } from '@/types';
 
 interface SidebarProps {
@@ -24,10 +24,12 @@ const navItems: NavItem[] = [
     { name: 'Agents', path: '/admin/agents', icon: Bot, roles: ['admin'] },
     { name: 'Onboarding', path: '/admin/onboarding', icon: GraduationCap, roles: ['admin'] },
     { name: 'Analytics', path: '/admin/analytics', icon: BarChart3, roles: ['admin'] },
+    { name: 'Messages', path: '/admin/messages', icon: MessageSquare, roles: ['admin'] },
     // Employee routes
     { name: 'Dashboard', path: '/employee/dashboard', icon: LayoutDashboard, roles: ['employee'] },
     { name: 'Ask Brain', path: '/employee/ask', icon: MessageCircle, roles: ['employee'] },
     { name: 'Documents', path: '/employee/documents', icon: BookOpen, roles: ['employee'] },
+    { name: 'Messages', path: '/employee/messages', icon: MessageSquare, roles: ['employee'] },
     { name: 'My Profile', path: '/employee/profile', icon: UserIcon, roles: ['employee'] },
 ];
 

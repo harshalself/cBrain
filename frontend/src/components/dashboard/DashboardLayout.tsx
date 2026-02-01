@@ -1,10 +1,12 @@
 import React from 'react';
-import { Outlet, useNavigate } from 'react-router-dom';
+import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { Sidebar } from './Sidebar';
 import { useAuth } from '@/contexts/AuthContext';
+import { ChatbotWidget } from '@/components/chat/ChatbotWidget';
 
 export const DashboardLayout: React.FC = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const { user, logout } = useAuth();
 
     const handleLogout = () => {
@@ -17,8 +19,11 @@ export const DashboardLayout: React.FC = () => {
         return null;
     }
 
+    // Hide chatbot widget on the dedicated AskBrain page to avoid duplication
+    const showChatbotWidget = !location.pathname.includes('/ask');
+
     return (
-        <div className="min-h-screen bg-background flex">
+        <div className="min-h-screen bg-background flex relative">
             {/* Sidebar */}
             <Sidebar
                 user={{
@@ -26,8 +31,8 @@ export const DashboardLayout: React.FC = () => {
                     name: user.name,
                     email: user.email,
                     role: user.role,
-                    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`,
-                    joinedDate: new Date().toISOString(),
+                    avatar: user.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`,
+                    joinedDate: user.created_at || new Date().toISOString(),
                     status: 'active' as const,
                 }}
                 onLogout={handleLogout}
@@ -37,6 +42,9 @@ export const DashboardLayout: React.FC = () => {
             <main className="flex-1 overflow-auto">
                 <Outlet />
             </main>
+
+            {/* Chatbot Widget */}
+            {showChatbotWidget && <ChatbotWidget />}
         </div>
     );
 };

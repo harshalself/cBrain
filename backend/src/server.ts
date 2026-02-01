@@ -1,6 +1,8 @@
 import "reflect-metadata";
+import { createServer } from "http";
 import App from "./app";
 import { logger } from "./utils/logger";
+import { initializeSocket } from "./utils/socket";
 import validateEnv from "./utils/validateEnv";
 import ChatRoute from "./features/chat/chat.route";
 import UserRoute from "./features/user/user.route";
@@ -20,6 +22,7 @@ import FolderRoute from "./features/folders/folder.route";
 import NotificationRoute from "./features/notifications/notification.route";
 import InvitationRoute from "./features/invitations/invitation.route";
 import OnboardingRoute from "./features/onboarding/onboarding.route";
+import MessagingRoute from "./features/messaging/messaging.route";
 import { gracefulShutdown } from "./utils/gracefulShutdown";
 
 validateEnv();
@@ -78,9 +81,22 @@ async function bootstrap() {
       new ProviderModelRoute(),
       new VectorRoute(),
       new AnalyticsRoute(),
+      new MessagingRoute(),
     ]);
 
-    app.listen();
+    // Create HTTP server for both Express and Socket.IO
+    const httpServer = createServer(app.getServer());
+
+    // Initialize Socket.IO with the HTTP server
+    initializeSocket(httpServer);
+
+    // Start HTTP server (replaces app.listen())
+    const port = Number(process.env.PORT) || 8000;
+    httpServer.listen(port, "0.0.0.0", () => {
+      logger.info(
+        `🚀 Company Brain Backend listening on port ${port}. Environment: ${process.env.NODE_ENV || "development"}`
+      );
+    });
     logger.info("✅ Company Brain Backend started successfully!");
 
     // Initialize graceful shutdown handlers

@@ -6,6 +6,12 @@ interface User {
     email: string;
     name: string;
     role: 'employee' | 'admin';
+    avatar?: string;
+    job_title?: string;
+    department?: string;
+    bio?: string;
+    created_at?: string;
+    last_login?: string;
 }
 
 interface AuthContextType {
@@ -26,16 +32,47 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [isLoading, setIsLoading] = useState(true);
 
     // Check for existing token on mount
+    // Check for existing token on mount
     useEffect(() => {
         const storedToken = localStorage.getItem('token');
         const storedUser = localStorage.getItem('user');
 
-        if (storedToken && storedUser) {
+        if (storedToken) {
             setToken(storedToken);
-            setUser(JSON.parse(storedUser));
-        }
+            if (storedUser) {
+                setUser(JSON.parse(storedUser));
+            }
 
-        setIsLoading(false);
+            // Fetch fresh profile data
+            authService.getProfile()
+                .then(response => {
+                    // response.data from getProfile wraps the user object in 'data' usually? 
+                    // Wait, getProfile implementation: return response.data.
+                    // api.get('/users/me') returns { status: 'success', data: user }.
+                    // So getProfile returns { status, message, data }.
+                    // Actually check authService again.
+                    // LoginResponse has data: { user, ... }.
+                    // getProfile impl I wrote: response.data.
+                    // The backend returns: res.json(ResponseUtil.success(..., userResponse)).
+                    // So response body is { status: 'success', message:..., data: userResponse }.
+                    // So authService.getProfile() returns { status, message, data: UserData }.
+
+                    const userData = response.data;
+                    setUser(userData as User); // existing User interface matches UserData mostly
+                    localStorage.setItem('user', JSON.stringify(userData));
+                })
+                .catch(error => {
+                    console.error('Failed to fetch profile:', error);
+                    if (error.response?.status === 401) {
+                        logout();
+                    }
+                })
+                .finally(() => {
+                    setIsLoading(false);
+                });
+        } else {
+            setIsLoading(false);
+        }
     }, []);
 
     const login = async (data: LoginData) => {
