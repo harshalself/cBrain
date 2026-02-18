@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, LogOut, Settings } from 'lucide-react';
+import { User, LogOut } from 'lucide-react';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -10,16 +10,28 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { User as UserType } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface ProfileDropdownProps {
     user: UserType;
-    onLogout?: () => void;
+    onLogout?: () => void; // Keeping for backward compatibility but using hook
 }
 
 export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ user, onLogout }) => {
     const navigate = useNavigate();
+    const { logout } = useAuth();
 
     const profilePath = user.role === 'admin' ? '/admin/profile' : '/employee/profile';
+
+    const handleLogout = async () => {
+        try {
+            await logout();
+            if (onLogout) onLogout();
+            navigate('/');
+        } catch (error) {
+            console.error('Logout failed:', error);
+        }
+    };
 
     return (
         <DropdownMenu>
@@ -47,8 +59,8 @@ export const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ user, onLogout
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
-                    onClick={onLogout}
-                    className="text-destructive focus:text-destructive focus:bg-destructive/10"
+                    onClick={handleLogout}
+                    className="text-destructive focus:text-destructive focus:bg-destructive/10 cursor-pointer"
                 >
                     <LogOut className="mr-2 h-4 w-4" />
                     <span>Logout</span>

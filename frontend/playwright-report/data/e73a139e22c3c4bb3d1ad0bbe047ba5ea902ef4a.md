@@ -1,0 +1,42 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e2]:
+  - region "Notifications (F8)":
+    - list
+  - region "Notifications alt+T"
+  - generic [ref=e3]:
+    - generic [ref=e6]:
+      - heading "Welcome Back" [level=1] [ref=e7]
+      - paragraph [ref=e8]: Access your account and continue your journey with Siemens
+      - generic [ref=e9]:
+        - generic [ref=e11]:
+          - text: Email Address
+          - textbox "Enter your email address" [ref=e14]
+        - generic [ref=e16]:
+          - text: Password
+          - generic [ref=e18]:
+            - textbox "Enter your password" [ref=e19]
+            - button [ref=e20] [cursor=pointer]:
+              - img [ref=e21]
+        - generic [ref=e25] [cursor=pointer]:
+          - checkbox "Keep me signed in" [ref=e26]
+          - generic [ref=e27]: Keep me signed in
+        - button "Sign In" [ref=e28] [cursor=pointer]
+      - paragraph [ref=e29]:
+        - text: New to Siemens?
+        - button "Create Account" [ref=e30] [cursor=pointer]
+    - generic [ref=e33]:
+      - generic [ref=e34]:
+        - img "Alex Morgan avatar" [ref=e35]
+        - generic [ref=e36]:
+          - paragraph [ref=e37]: Alex Morgan
+          - paragraph [ref=e38]: "@alexm"
+          - paragraph [ref=e39]: Siemens transformed how our team shares knowledge!
+      - generic [ref=e41]:
+        - img "Sarah Chen avatar" [ref=e42]
+        - generic [ref=e43]:
+          - paragraph [ref=e44]: Sarah Chen
+          - paragraph [ref=e45]: "@sarahc"
+          - paragraph [ref=e46]: Onboarding new employees is 10x faster now.
+```

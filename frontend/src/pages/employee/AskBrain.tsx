@@ -4,6 +4,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { formatRelativeTime } from '@/lib/utils';
 import { Send, Brain, Clock, Sparkles, Loader2, AlertCircle, FileText, Copy, Check } from 'lucide-react';
 import chatService, { ChatMessage, ChatSessionWithSummary, SendMessageResponse } from '@/services/chatService';
+import agentService from '@/services/agentService';
 import { ConversationSidebar } from '@/components/chat/ConversationSidebar';
 import { toast } from 'sonner';
 import ReactMarkdown from 'react-markdown';
@@ -28,6 +29,7 @@ const AskBrain: React.FC = () => {
     const [isCreatingSession, setIsCreatingSession] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [agentNotConfigured, setAgentNotConfigured] = useState(false);
+    const [agentId, setAgentId] = useState<number | null>(null);
 
     // Chat state
     const [sessions, setSessions] = useState<ChatSessionWithSummary[]>([]);
@@ -39,12 +41,9 @@ const AskBrain: React.FC = () => {
     // Refs
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    // Note: Using agentId = 1 as default - this should be configurable
-    const DEFAULT_AGENT_ID = 1;
-
-    // Load sessions on mount
+    // Load agent and sessions on mount
     useEffect(() => {
-        loadSessions();
+        initializeChat();
     }, []);
 
     // Load messages when active session changes
@@ -61,11 +60,42 @@ const AskBrain: React.FC = () => {
         }
     }, [messages, isSending, activeSession?.id]);
 
-    const loadSessions = async (showLoading = true) => {
+    const initializeChat = async () => {
         try {
-            if (showLoading) setIsLoading(true);
+            setIsLoading(true);
             setError(null);
-            const data = await chatService.getSessions(DEFAULT_AGENT_ID);
+
+            // 1. Fetch active agent
+            let currentAgentId: number;
+
+            try {
+                const agent = await agentService.getActiveAgent();
+                currentAgentId = agent.id;
+                setAgentId(currentAgentId);
+            } catch (err: any) {
+                if (err.response?.status === 404) {
+                    setAgentNotConfigured(true);
+                    setIsLoading(false);
+                    return;
+                }
+                throw err;
+            }
+
+            // 2. Load sessions for this agent
+            await loadSessions(currentAgentId);
+
+        } catch (err: any) {
+            console.error(err);
+            const errorMsg = err.response?.data?.message || 'Failed to initialize chat';
+            setError(errorMsg);
+            toast.error(errorMsg);
+            setIsLoading(false);
+        }
+    };
+
+    const loadSessions = async (currentAgentId: number) => {
+        try {
+            const data = await chatService.getSessions(currentAgentId);
             setSessions(data);
 
             // Auto-select most recent session or create new one
@@ -74,19 +104,12 @@ const AskBrain: React.FC = () => {
                     setActiveSession(data[0]);
                 }
             } else {
-                await createNewSession();
+                await createNewSession(currentAgentId);
             }
         } catch (err: any) {
-            const errorMsg = err.response?.data?.message || 'Failed to load conversations';
-            // Check if error is due to agent not existing
-            if (errorMsg.includes('Agent not found') || err.response?.status === 404) {
-                setAgentNotConfigured(true);
-            } else {
-                setError(errorMsg);
-                toast.error(errorMsg);
-            }
+            throw err; // Let initializeChat handle errors
         } finally {
-            if (showLoading) setIsLoading(false);
+            setIsLoading(false);
         }
     };
 
@@ -100,10 +123,13 @@ const AskBrain: React.FC = () => {
         }
     };
 
-    const createNewSession = async () => {
+    const createNewSession = async (currentAgentId?: number) => {
+        const idToUse = currentAgentId || agentId;
+        if (!idToUse) return;
+
         try {
             setIsCreatingSession(true);
-            const newSession = await chatService.createSession(DEFAULT_AGENT_ID);
+            const newSession = await chatService.createSession(idToUse);
             setSessions(prev => [newSession, ...prev]);
             setActiveSession(newSession);
             setMessages([]);
@@ -126,8 +152,8 @@ const AskBrain: React.FC = () => {
                 const remaining = sessions.filter(s => s.id !== sessionId);
                 if (remaining.length > 0) {
                     setActiveSession(remaining[0]);
-                } else {
-                    await createNewSession();
+                } else if (agentId) {
+                    await createNewSession(agentId);
                 }
             }
 
@@ -140,7 +166,7 @@ const AskBrain: React.FC = () => {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!question.trim() || !activeSession) return;
+        if (!question.trim() || !activeSession || !agentId) return;
 
         const userMessageContent = question.trim();
         setQuestion('');
@@ -164,7 +190,7 @@ const AskBrain: React.FC = () => {
             }));
 
             // Send message to AI
-            const response = await chatService.sendMessage(DEFAULT_AGENT_ID, {
+            const response = await chatService.sendMessage(agentId, {
                 messages: [
                     ...messageHistory,
                     { role: 'user', content: userMessageContent }
@@ -191,7 +217,10 @@ const AskBrain: React.FC = () => {
             }
 
             // Reload session list to update last_message_at
-            loadSessions(false);
+            // We don't want to show full loading state here
+            const data = await chatService.getSessions(agentId);
+            setSessions(data);
+
         } catch (err: any) {
             const errorMsg = err.response?.data?.message || 'Failed to send message';
             toast.error(errorMsg);
@@ -278,7 +307,7 @@ const AskBrain: React.FC = () => {
                         <h3 className="text-lg font-semibold mb-2">Failed to Load</h3>
                         <p className="text-muted-foreground mb-4">{error}</p>
                         <button
-                            onClick={() => loadSessions()}
+                            onClick={() => initializeChat()}
                             className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
                         >
                             Try Again
@@ -299,7 +328,7 @@ const AskBrain: React.FC = () => {
                     sessions={sessions}
                     activeSessionId={activeSession?.id || null}
                     onSelectSession={setActiveSession}
-                    onCreateNew={createNewSession}
+                    onCreateNew={() => createNewSession()}
                     onDelete={handleDeleteSession}
                     isCreating={isCreatingSession}
                 />

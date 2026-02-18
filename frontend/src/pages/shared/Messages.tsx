@@ -12,7 +12,7 @@ import messagingService, {
     Contact,
 } from '@/services/messagingService';
 import { useSocketContext } from '@/contexts/SocketContext';
-import { NewMessageEvent } from '@/hooks/useSocket';
+import { NewMessageEvent, TypingEvent } from '@/hooks/useSocket';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
@@ -81,10 +81,24 @@ export const MessagesPage: React.FC = () => {
         mutationFn: ({ conversationId, content }: { conversationId: number; content: string }) =>
             messagingService.sendMessage(conversationId, content),
         onSuccess: (newMessage) => {
-            // Optimistically add message to cache
-            queryClient.setQueryData<{ messages: DirectMessage[] }>(
+            // Optimistically add message to cache, ensuring no duplicates
+            queryClient.setQueryData<{ messages: DirectMessage[]; pagination: any }>(
                 ['messages', selectedConversation?.id],
-                (old) => old ? { ...old, messages: [...old.messages, newMessage] } : { messages: [newMessage], pagination: { page: 1, limit: 50, hasMore: false } }
+                (old) => {
+                    if (!old) return {
+                        messages: [newMessage],
+                        pagination: { page: 1, limit: 50, hasMore: false }
+                    };
+
+                    // Check if message already exists (to prevent race conditions with socket)
+                    const exists = old.messages.some((m) => m.id === newMessage.id);
+                    if (exists) return old;
+
+                    return {
+                        ...old,
+                        messages: [...old.messages, newMessage]
+                    };
+                }
             );
             // Refetch conversations to update last message
             queryClient.invalidateQueries({ queryKey: ['conversations'] });
@@ -112,6 +126,7 @@ export const MessagesPage: React.FC = () => {
         mutationFn: (conversationId: number) => messagingService.markAsRead(conversationId),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['conversations'] });
+            queryClient.invalidateQueries({ queryKey: ['unreadMessagesCount'] });
         },
     });
 
@@ -168,37 +183,43 @@ export const MessagesPage: React.FC = () => {
         const handleNewMessage = (message: NewMessageEvent) => {
             // If this is for the currently selected conversation, add to messages
             if (selectedConversation && message.conversation_id === selectedConversation.id) {
-                queryClient.setQueryData<{ messages: DirectMessage[] }>(
+                queryClient.setQueryData<{ messages: DirectMessage[]; pagination: any }>(
                     ['messages', selectedConversation.id],
                     (old) => {
-                        if (!old) return { messages: [message as DirectMessage], pagination: { page: 1, limit: 50, hasMore: false } };
-                        // Avoid duplicate messages
+                        if (!old) return {
+                            messages: [message as DirectMessage],
+                            pagination: { page: 1, limit: 50, hasMore: false }
+                        };
+
+                        // Avoid duplicate messages (to prevent race conditions with API response)
                         const exists = old.messages.some((m) => m.id === message.id);
                         if (exists) return old;
-                        return { ...old, messages: [...old.messages, message as DirectMessage] };
+
+                        return {
+                            ...old,
+                            messages: [...old.messages, message as DirectMessage]
+                        };
                     }
                 );
                 // Mark as read since we're viewing the conversation
                 markAsReadMutation.mutate(message.conversation_id);
             } else {
-                // Show notification for messages in other conversations
+                // If in another conversation, just invalidate to update unread counts
+                queryClient.invalidateQueries({ queryKey: ['conversations'] });
                 toast.info(`New message from ${message.sender_name}`, {
                     description: message.content.substring(0, 50) + (message.content.length > 50 ? '...' : ''),
                 });
             }
-            // Refresh conversations list
-            queryClient.invalidateQueries({ queryKey: ['conversations'] });
         };
 
-        // Listen for typing indicators
-        const handleTypingStart = (data: { conversationId: number; userId: number }) => {
-            if (selectedConversation && data.conversationId === selectedConversation.id) {
+        const handleTypingStart = (data: TypingEvent) => {
+            if (selectedConversation && data.conversationId === selectedConversation.id && Number(data.userId) !== Number(user?.id)) {
                 setTypingUser(selectedConversation.other_user_name);
             }
         };
 
-        const handleTypingStop = (data: { conversationId: number; userId: number }) => {
-            if (selectedConversation && data.conversationId === selectedConversation.id) {
+        const handleTypingStop = (data: TypingEvent) => {
+            if (selectedConversation && data.conversationId === selectedConversation.id && Number(data.userId) !== Number(user?.id)) {
                 setTypingUser(null);
             }
         };
@@ -212,7 +233,7 @@ export const MessagesPage: React.FC = () => {
             socket.off('typing:start', handleTypingStart);
             socket.off('typing:stop', handleTypingStop);
         };
-    }, [socket, selectedConversation, queryClient, markAsReadMutation]);
+    }, [socket, selectedConversation?.id, user?.id, queryClient]); // Only depend on IDs for stability
 
     // Clear typing indicator when changing conversations
     useEffect(() => {

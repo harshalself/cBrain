@@ -8,11 +8,13 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Badge } from '@/components/ui/badge';
+import { useSocketContext } from '@/contexts/SocketContext';
 import NotificationPanel from './NotificationPanel';
 
 export default function NotificationBell() {
     const [unreadCount, setUnreadCount] = useState(0);
     const [isOpen, setIsOpen] = useState(false);
+    const { socket } = useSocketContext();
 
     // Fetch unread count
     const fetchUnreadCount = async () => {
@@ -24,12 +26,28 @@ export default function NotificationBell() {
         }
     };
 
-    // Poll for new notifications every 30 seconds
+    // Poll for new notifications every 30 seconds (fallback)
     useEffect(() => {
         fetchUnreadCount();
         const interval = setInterval(fetchUnreadCount, 30000);
         return () => clearInterval(interval);
     }, []);
+
+    // Listen for real-time notifications
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleNewNotification = () => {
+            // Increment unread count or refetch to be safe
+            setUnreadCount((prev) => prev + 1);
+        };
+
+        socket.on('notification:new', handleNewNotification);
+
+        return () => {
+            socket.off('notification:new', handleNewNotification);
+        };
+    }, [socket]);
 
     // Refresh count when panel is closed
     const handleOpenChange = (open: boolean) => {

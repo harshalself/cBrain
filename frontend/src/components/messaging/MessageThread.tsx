@@ -134,7 +134,7 @@ export const MessageThread: React.FC<MessageThreadProps> = ({
                 ) : (
                     <>
                         {messages.map((message, index) => {
-                            const isOwn = message.sender_id === user?.id;
+                            const isOwn = Number(message.sender_id) === Number(user?.id);
                             const prevMessage = messages[index - 1];
                             const showSenderName = !prevMessage || prevMessage.sender_id !== message.sender_id;
 

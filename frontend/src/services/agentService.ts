@@ -20,6 +20,14 @@ class AgentService {
     }
 
     /**
+     * Get the active system agent (for any user)
+     */
+    async getActiveAgent(): Promise<Agent> {
+        const response = await api.get(`${this.basePath}/active`);
+        return response.data.data;
+    }
+
+    /**
      * Get agent by ID
      */
     async getAgent(id: number): Promise<Agent> {

@@ -7,6 +7,8 @@ import { Badge } from '@/components/ui/badge';
 import { formatDistanceToNow } from 'date-fns';
 import { CheckCheck, Trash2 } from 'lucide-react';
 
+import { useSocketContext } from '@/contexts/SocketContext';
+
 interface NotificationPanelProps {
     onClose: () => void;
 }
@@ -14,6 +16,7 @@ interface NotificationPanelProps {
 export default function NotificationPanel({ onClose }: NotificationPanelProps) {
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [loading, setLoading] = useState(true);
+    const { socket } = useSocketContext();
 
     const fetchNotifications = async () => {
         try {
@@ -33,6 +36,21 @@ export default function NotificationPanel({ onClose }: NotificationPanelProps) {
     useEffect(() => {
         fetchNotifications();
     }, []);
+
+    // Listen for real-time notifications
+    useEffect(() => {
+        if (!socket) return;
+
+        const handleNewNotification = (notification: Notification) => {
+            setNotifications((prev) => [notification, ...prev]);
+        };
+
+        socket.on('notification:new', handleNewNotification);
+
+        return () => {
+            socket.off('notification:new', handleNewNotification);
+        };
+    }, [socket]);
 
     const handleMarkAsRead = async (id: number) => {
         try {
@@ -162,22 +180,6 @@ export default function NotificationPanel({ onClose }: NotificationPanelProps) {
                     </div>
                 )}
             </ScrollArea>
-
-            {/* Footer */}
-            {notifications.length > 0 && (
-                <>
-                    <Separator />
-                    <div className="px-4 py-3">
-                        <Button
-                            variant="ghost"
-                            className="w-full text-sm"
-                            onClick={onClose}
-                        >
-                            View all notifications
-                        </Button>
-                    </div>
-                </>
-            )}
         </div>
     );
 }

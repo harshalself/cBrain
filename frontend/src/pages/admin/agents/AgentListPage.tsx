@@ -3,7 +3,7 @@ import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import agentService from '@/services/agentService';
 import { Agent } from '@/types/agent.types';
-import { Plus, Loader2, AlertCircle, Pencil, Trash2, Bot } from 'lucide-react';
+import { Plus, Loader2, AlertCircle, Pencil, Trash2, Bot, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
@@ -158,6 +158,8 @@ const AgentListPage: React.FC = () => {
         });
     };
 
+    const canCreateAgent = agents.length === 0;
+
     // Loading state
     if (isLoading) {
         return (
@@ -208,13 +210,21 @@ const AgentListPage: React.FC = () => {
                             Create and manage your AI assistants
                         </p>
                     </div>
-                    <button
-                        onClick={handleCreateNew}
-                        className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
-                    >
-                        <Plus className="w-5 h-5" />
-                        New Agent
-                    </button>
+
+                    {canCreateAgent ? (
+                        <button
+                            onClick={handleCreateNew}
+                            className="flex items-center gap-2 px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90 transition-colors"
+                        >
+                            <Plus className="w-5 h-5" />
+                            New Agent
+                        </button>
+                    ) : (
+                        <div className="flex items-center gap-2 px-4 py-2 bg-secondary/50 text-muted-foreground rounded-lg cursor-not-allowed border border-border" title="You can only create one agent">
+                            <Info className="w-5 h-5" />
+                            <span>Limit Reached (1/1)</span>
+                        </div>
+                    )}
                 </div>
 
                 {/* Empty State */}

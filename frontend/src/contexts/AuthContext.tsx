@@ -77,12 +77,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     const login = async (data: LoginData) => {
         const response = await authService.login(data);
-        const { accessToken, user: userData } = response.data;
+        const { accessToken, refreshToken, user: userData } = response.data;
 
         setToken(accessToken);
         setUser(userData);
 
         localStorage.setItem('token', accessToken);
+        localStorage.setItem('refreshToken', refreshToken);
         localStorage.setItem('user', JSON.stringify(userData));
 
         return userData as User;
@@ -106,6 +107,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser(null);
             setToken(null);
             localStorage.removeItem('token');
+            localStorage.removeItem('refreshToken');
             localStorage.removeItem('user');
         }
     };
