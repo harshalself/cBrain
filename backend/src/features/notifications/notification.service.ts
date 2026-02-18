@@ -2,6 +2,7 @@ import knex from "../../../database/index.schema";
 import HttpException from "../../exceptions/HttpException";
 import { CreateNotificationDto, BroadcastNotificationDto, NotificationQueryDto } from "./notification.dto";
 import { INotification } from "./notification.interface";
+import { emitToUser } from "../../utils/socket";
 
 class NotificationService {
     /**
@@ -62,6 +63,9 @@ class NotificationService {
                 })
                 .returning("*");
 
+            // Emit real-time notification
+            emitToUser(data.user_id, 'notification:new', notification);
+
             return notification;
         } catch (error: any) {
             throw new HttpException(500, `Error creating notification: ${error.message}`);
@@ -97,6 +101,13 @@ class NotificationService {
 
             if (notifications.length > 0) {
                 await knex("notifications").insert(notifications);
+
+                // Emitting events individually for now
+                // In a production env with many users, might want to use a room broadcast if applicable
+                // or a job queue. For now, individual emits are fine.
+                notifications.forEach(n => {
+                    emitToUser(n.user_id, 'notification:new', n);
+                });
             }
 
             return notifications.length;

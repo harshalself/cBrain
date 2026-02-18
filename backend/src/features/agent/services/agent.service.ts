@@ -26,6 +26,13 @@ class AgentService {
       if (!agentData.model || !agentData.provider) {
         throw new HttpException(400, "Both model and provider are required");
       }
+
+      // Restrict to single agent
+      const existingAgents = await this.getAgentsByUser(userId);
+      if (existingAgents.length > 0) {
+        throw new HttpException(400, "You can only create one agent. Please edit the existing agent instead.");
+      }
+
       await validateModelForProvider(agentData.provider, agentData.model);
       await checkAgentNameExists(agentData.name, userId);
 
@@ -77,6 +84,28 @@ class AgentService {
   }
 
   /**
+   * Get the active agent for the system/organization
+   * Returns the first active agent found, regardless of who created it
+   */
+  public async getActiveAgent(): Promise<IAgent> {
+    try {
+      const agent = await knex("agents")
+        .where({ is_deleted: false, is_active: 1 })
+        .orderBy("created_at", "asc") // Get the first created one (likely the main one)
+        .first();
+
+      if (!agent) {
+        throw new HttpException(404, "No active agent found");
+      }
+
+      return agent;
+    } catch (error) {
+      if (error instanceof HttpException) throw error;
+      throw new HttpException(500, `Error fetching active agent: ${error.message}`);
+    }
+  }
+
+  /**
    * Get agent by ID (with caching)
    */
   public async getAgentById(agentId: number, userId: number): Promise<IAgent> {
@@ -87,7 +116,11 @@ class AgentService {
         userId,
         async () => {
           const dbAgent = await knex("agents")
-            .where({ id: agentId, user_id: userId, is_deleted: false })
+            .where({ id: agentId, is_deleted: false })
+            .andWhere(function () {
+              this.where({ user_id: userId })
+                .orWhere({ is_active: 1 }); // Allow access if agent is active (system agent)
+            })
             .first();
 
           if (!dbAgent) {

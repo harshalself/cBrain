@@ -25,6 +25,12 @@ class AgentRoute implements Route {
     // Get all agents for the authenticated user
     this.router.get(`${this.path}`, this.agentController.getAgents);
 
+    // Get active system agent
+    this.router.get(
+      `${this.path}/active`,
+      this.agentController.getActiveAgent
+    );
+
     // Get agent by ID
     this.router.get(
       `${this.path}/:id`,

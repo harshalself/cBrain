@@ -142,6 +142,7 @@ class ChatProcessorService {
 
         return {
           message: blockedResponse,
+          response: blockedResponse, // Fix: Add response property here as well
           sessionId: session.id,
           blocked: true,
           reason: "general_knowledge_query",
@@ -277,6 +278,7 @@ class ChatProcessorService {
 
       return {
         message: fullResponse,
+        response: fullResponse, // Fix: Add response property to match frontend expectation
         model: agent.model,
         provider: agent.provider,
         sessionId: session.id,

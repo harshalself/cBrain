@@ -71,6 +71,31 @@ class AgentController {
   };
 
   /**
+   * Get the active system agent (for any authenticated user)
+   */
+  public getActiveAgent = async (
+    req: RequestWithUser,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const userId = req.userId || req.user?.id;
+      if (!userId) {
+        throw new HttpException(401, "User authentication required");
+      }
+
+      const agent = await this.agentService.getActiveAgent();
+      const agentResponse = sanitizeAgentResponse(agent);
+
+      res.status(200).json(
+        ResponseUtil.success("Active agent retrieved successfully", agentResponse)
+      );
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
    * Get agent by ID
    */
   public getAgent = async (
