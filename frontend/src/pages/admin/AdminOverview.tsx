@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { StatCard } from '@/components/dashboard/StatCard';
-import { getCurrentUser } from '@/lib/mockData';
+import { useAuth } from '@/contexts/AuthContext';
 import { formatRelativeTime } from '@/lib/utils';
 import { Stat, Activity } from '@/types';
 import { Upload, MessageSquare, UserPlus, FileEdit, Loader2, RefreshCw, Users, FileText, Bot, Clock } from 'lucide-react';
@@ -21,7 +21,16 @@ const activityIcons: Record<string, React.ElementType> = {
 };
 
 const AdminOverview: React.FC = () => {
-    const user = getCurrentUser();
+    const { user: authUser } = useAuth();
+    const user = authUser ? {
+        id: authUser.id.toString(),
+        name: authUser.name,
+        email: authUser.email,
+        role: authUser.role,
+        avatar: authUser.avatar || `https://api.dicebear.com/7.x/notionists/svg?seed=${authUser.email}&backgroundColor=b6e3f4,c0aede,d1d4f9`,
+        joinedDate: authUser.created_at || new Date().toISOString(),
+        status: 'active' as const,
+    } : null;
     const { toast } = useToast();
 
     // State

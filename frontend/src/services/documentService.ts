@@ -11,7 +11,6 @@ export interface Document {
     id: number;
     name: string;
     original_name: string;
-    folder_id: number | null;
     file_type: FileType;
     file_size: number | null;
     file_path: string;
@@ -34,7 +33,6 @@ export interface DocumentListQuery {
     limit?: number;
     search?: string;
     file_type?: FileType;
-    folder_id?: number | null;
     status?: DocumentStatus;
 }
 
@@ -48,13 +46,11 @@ export interface DocumentListResponse {
 export interface UploadDocumentRequest {
     file: File;
     name?: string;
-    folder_id?: number | null;
     tags?: string[];
 }
 
 export interface UpdateDocumentRequest {
     name?: string;
-    folder_id?: number | null;
     tags?: string[];
 }
 
@@ -81,9 +77,6 @@ class DocumentService {
         if (query?.limit) params.append('limit', query.limit.toString());
         if (query?.search) params.append('search', query.search);
         if (query?.file_type) params.append('file_type', query.file_type);
-        if (query?.folder_id !== undefined && query?.folder_id !== null) {
-            params.append('folder_id', query.folder_id.toString());
-        }
         if (query?.status) params.append('status', query.status);
 
         const queryString = params.toString();
@@ -104,21 +97,15 @@ class DocumentService {
     /**
      * Upload a new document
      */
-    async uploadDocument(data: UploadDocumentRequest): Promise<Document> {
+    async uploadDocument(request: UploadDocumentRequest): Promise<Document> {
         const formData = new FormData();
-        formData.append('file', data.file);
-
-        if (data.name) {
-            formData.append('name', data.name);
-        }
-        if (data.folder_id !== undefined && data.folder_id !== null) {
-            formData.append('folder_id', data.folder_id.toString());
-        }
-        if (data.tags && data.tags.length > 0) {
-            formData.append('tags', JSON.stringify(data.tags));
+        formData.append('file', request.file);
+        if (request.name) formData.append('name', request.name);
+        if (request.tags && request.tags.length > 0) {
+            formData.append('tags', JSON.stringify(request.tags));
         }
 
-        const response = await api.post(`${this.basePath}/upload`, formData, {
+        const response = await api.post('/documents/upload', formData, {
             headers: {
                 'Content-Type': 'multipart/form-data',
             },
@@ -149,15 +136,7 @@ class DocumentService {
         return response.data.data;
     }
 
-    /**
-     * Move a document to a folder
-     */
-    async moveDocument(id: number, folderId: number | null): Promise<Document> {
-        const response = await api.put(`${this.basePath}/${id}/move`, {
-            folder_id: folderId,
-        });
-        return response.data.data;
-    }
+
 
     /**
      * Helper: Format file size for display

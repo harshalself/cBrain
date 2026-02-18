@@ -1,4 +1,4 @@
-# Company Brain - Frontend
+# Siemens - Frontend
 
 AI-Powered Internal Knowledge Platform for seamless company knowledge management.
 

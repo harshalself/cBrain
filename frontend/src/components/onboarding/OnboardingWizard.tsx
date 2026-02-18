@@ -161,7 +161,7 @@ export default function OnboardingWizard() {
                             <Brain className="w-5 h-5 text-primary-foreground" />
                         </div>
                         <div>
-                            <h1 className="text-xl font-bold">Welcome to cBrain</h1>
+                            <h1 className="text-xl font-bold">Welcome to Siemens</h1>
                             <p className="text-sm text-muted-foreground">Complete your onboarding</p>
                         </div>
                     </div>
@@ -279,7 +279,7 @@ export default function OnboardingWizard() {
                         <Separator className="mb-8" />
                         <h2 className="text-xl font-bold mb-2">🎉 All Sections Complete!</h2>
                         <p className="text-muted-foreground mb-6">
-                            You're ready to start using cBrain.
+                            You're ready to start using Siemens.
                         </p>
                         <Button
                             size="lg"

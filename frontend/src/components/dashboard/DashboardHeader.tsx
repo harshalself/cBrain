@@ -20,18 +20,8 @@ export const DashboardHeader: React.FC<DashboardHeaderProps> = ({ title, user, o
                     <h1 className="text-2xl lg:text-3xl font-bold text-foreground">{title}</h1>
                 </div>
 
-                {/* Search and Actions */}
+                {/* Actions */}
                 <div className="flex items-center gap-4">
-                    {/* Search */}
-                    <div className="hidden md:flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary/20 border border-border">
-                        <Search className="w-4 h-4 text-muted-foreground" />
-                        <input
-                            type="text"
-                            placeholder="Search..."
-                            className="bg-transparent text-sm focus:outline-none w-48 lg:w-64"
-                        />
-                    </div>
-
                     {/* Notifications */}
                     <NotificationBell />
 

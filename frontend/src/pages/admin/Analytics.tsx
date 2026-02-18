@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { DataTable } from '@/components/dashboard/DataTable';
-import { getCurrentUser } from '@/lib/mockData';
+import { useAuth } from '@/contexts/AuthContext';
 import {
     TrendingUp,
     AlertTriangle,
@@ -25,7 +25,16 @@ import { useToast } from '@/hooks/use-toast';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 const Analytics: React.FC = () => {
-    const user = getCurrentUser();
+    const { user: authUser } = useAuth();
+    const user = authUser ? {
+        id: authUser.id.toString(),
+        name: authUser.name,
+        email: authUser.email,
+        role: authUser.role,
+        avatar: authUser.avatar || `https://api.dicebear.com/7.x/notionists/svg?seed=${authUser.email}&backgroundColor=b6e3f4,c0aede,d1d4f9`,
+        joinedDate: authUser.created_at || new Date().toISOString(),
+        status: 'active' as const,
+    } : null;
     const { toast } = useToast();
 
     // State

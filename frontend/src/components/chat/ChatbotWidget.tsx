@@ -86,7 +86,7 @@ export const ChatbotWidget: React.FC = () => {
 
         try {
             // Build history context
-            const messageHistory = messages.map(m => ({
+            const messageHistory = (messages || []).map(m => ({
                 role: m.role,
                 content: m.content
             }));
@@ -151,7 +151,7 @@ export const ChatbotWidget: React.FC = () => {
                         <div className="p-1.5 rounded-lg bg-white/20">
                             <Brain className="w-4 h-4" />
                         </div>
-                        <span className="font-semibold">Chat with cBrain</span>
+                        <span className="font-semibold">Chat with Siemens</span>
                     </div>
                     <div className="flex items-center gap-1">
                         <button
@@ -169,7 +169,7 @@ export const ChatbotWidget: React.FC = () => {
                     {isLoading ? (
                         <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2">
                             <Loader2 className="w-6 h-6 animate-spin" />
-                            <span className="text-sm">Connecting to cBrain...</span>
+                            <span className="text-sm">Connecting to Siemens...</span>
                         </div>
                     ) : messages.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full text-center p-4">
@@ -183,7 +183,7 @@ export const ChatbotWidget: React.FC = () => {
                         </div>
                     ) : (
                         <>
-                            {messages.map((msg) => (
+                            {(messages || []).map((msg) => (
                                 <div
                                     key={msg.id}
                                     className={cn(
@@ -260,8 +260,8 @@ export const ChatbotWidget: React.FC = () => {
                 className={cn(
                     "pointer-events-auto flex items-center justify-center w-14 h-14 rounded-2xl shadow-xl transition-all duration-300 hover:scale-105 active:scale-95 z-50",
                     isOpen
-                        ? "bg-[#547792] text-white hover:bg-[#547792]/90 rotate-0"
-                        : "bg-gradient-to-br from-[#213448] to-[#547792] text-white rotate-0"
+                        ? "bg-secondary text-secondary-foreground hover:bg-secondary/90"
+                        : "bg-primary text-primary-foreground hover:bg-primary/95 shadow-primary/20"
                 )}
                 aria-label={isOpen ? "Close chat" : "Open chat"}
             >

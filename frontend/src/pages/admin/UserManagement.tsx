@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { DataTable } from '@/components/dashboard/DataTable';
-import { getCurrentUser } from '@/lib/mockData';
+import { useAuth } from '@/contexts/AuthContext';
 import { UserPlus, Search, Mail, Loader2, RefreshCw, Trash2, User as UserIcon } from 'lucide-react';
 import { userService, User } from '@/services/userService';
 import InviteUserModal from '@/components/invitations/InviteUserModal';
@@ -21,7 +21,16 @@ import {
 } from '@/components/ui/alert-dialog';
 
 const UserManagement: React.FC = () => {
-    const currentUser = getCurrentUser();
+    const { user: authUser } = useAuth();
+    const currentUser = authUser ? {
+        id: authUser.id.toString(),
+        name: authUser.name,
+        email: authUser.email,
+        role: authUser.role,
+        avatar: authUser.avatar || `https://api.dicebear.com/7.x/notionists/svg?seed=${authUser.email}&backgroundColor=b6e3f4,c0aede,d1d4f9`,
+        joinedDate: authUser.created_at || new Date().toISOString(),
+        status: 'active' as const,
+    } : null;
     const { toast } = useToast();
 
     // User state
@@ -196,7 +205,7 @@ const UserManagement: React.FC = () => {
                         setDeleteUserId(u.id);
                         setShowDeleteDialog(true);
                     }}
-                    disabled={u.id === parseInt(currentUser.id)} // Can't delete yourself
+                    disabled={u.id === (currentUser ? parseInt(currentUser.id) : -1)} // Can't delete yourself
                 >
                     <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
                 </Button>
@@ -216,7 +225,7 @@ const UserManagement: React.FC = () => {
                 {/* Action Bar */}
                 <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
                     <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center flex-1 w-full">
-                        <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-secondary/20 border border-border w-full sm:w-96">
+                        <div className="flex items-center gap-2 px-4 h-[46px] rounded-xl bg-secondary/20 border border-border w-full sm:w-96">
                             <Search className="w-4 h-4 text-muted-foreground" />
                             <input
                                 type="text"
@@ -230,7 +239,7 @@ const UserManagement: React.FC = () => {
                         <select
                             value={roleFilter}
                             onChange={(e) => setRoleFilter(e.target.value as 'all' | 'admin' | 'employee')}
-                            className="px-4 py-3 rounded-xl bg-secondary/20 border border-border text-sm focus:outline-none focus:border-primary"
+                            className="px-4 h-[46px] rounded-xl bg-secondary/20 border border-border text-sm focus:outline-none focus:border-primary"
                         >
                             <option value="all">All Roles</option>
                             <option value="admin">Admins</option>
@@ -244,16 +253,19 @@ const UserManagement: React.FC = () => {
                             size="icon"
                             onClick={() => loadUsers()}
                             disabled={isLoading}
+                            className="rounded-xl h-[46px] w-[46px]"
                         >
                             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
                         </Button>
+                        {/* 
                         <Button
-                            className="shadow-lg shadow-primary/25"
+                            className="rounded-xl h-[46px] px-6 shadow-lg shadow-primary/25"
                             onClick={() => setShowInviteModal(true)}
                         >
                             <Mail className="w-4 h-4 mr-2" />
                             Invite User
                         </Button>
+                        */}
                     </div>
                 </div>
 
@@ -277,13 +289,14 @@ const UserManagement: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Tabs for Users and Invitations */}
+                {/* Tabs for Users and Invitations - Hidden for now */}
                 <Tabs defaultValue="users" className="space-y-4">
+                    {/* 
                     <TabsList>
                         <TabsTrigger value="users">Users</TabsTrigger>
                         <TabsTrigger value="invitations">Pending Invitations</TabsTrigger>
                     </TabsList>
-
+                    */}
                     <TabsContent value="users">
                         {isLoading ? (
                             <div className="flex items-center justify-center py-12">
@@ -294,8 +307,9 @@ const UserManagement: React.FC = () => {
                                 <UserIcon className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
                                 <h3 className="text-lg font-medium">No users found</h3>
                                 <p className="text-muted-foreground mt-1">
-                                    {searchQuery ? 'Try a different search term' : 'Invite users to get started'}
+                                    {searchQuery ? 'Try a different search term' : 'No users registered yet'}
                                 </p>
+                                {/* 
                                 <Button
                                     onClick={() => setShowInviteModal(true)}
                                     className="mt-4"
@@ -303,6 +317,7 @@ const UserManagement: React.FC = () => {
                                     <Mail className="w-4 h-4 mr-2" />
                                     Invite User
                                 </Button>
+                                */}
                             </div>
                         ) : (
                             <DataTable
@@ -313,9 +328,11 @@ const UserManagement: React.FC = () => {
                         )}
                     </TabsContent>
 
+                    {/* 
                     <TabsContent value="invitations">
                         <PendingInvitations refreshTrigger={refreshTrigger} />
                     </TabsContent>
+                    */}
                 </Tabs>
             </div>
 

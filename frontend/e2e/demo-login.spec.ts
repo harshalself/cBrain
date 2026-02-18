@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 /**
- * DEMO TEST: Login Flow for cBrain
+ * DEMO TEST: Login Flow for Siemens
  * 
  * This is a simple demo to show you how Playwright tests work.
  * It tests the complete login flow from the signin page to the dashboard.

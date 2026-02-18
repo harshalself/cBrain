@@ -40,7 +40,7 @@ const SignUp = () => {
 
             toast({
                 title: "Registration successful!",
-                description: "Welcome to Company Brain",
+                description: "Welcome to Siemens",
             });
 
             // Redirect based on role
@@ -102,7 +102,7 @@ const SignUp = () => {
         >
             <div className="flex flex-col gap-6">
                 <h1 className="animate-element animate-delay-100 text-4xl md:text-5xl font-semibold leading-tight">
-                    <span className="font-light text-foreground tracking-tighter">Join cBrain</span>
+                    <span className="font-light text-foreground tracking-tighter">Join Siemens</span>
                 </h1>
                 <p className="animate-element animate-delay-200 text-muted-foreground">
                     Create your account and empower your team with AI-powered knowledge

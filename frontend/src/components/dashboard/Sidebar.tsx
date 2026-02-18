@@ -20,10 +20,11 @@ const navItems: NavItem[] = [
     // Admin routes
     { name: 'Overview', path: '/admin/overview', icon: LayoutDashboard, roles: ['admin'] },
     { name: 'Knowledge Base', path: '/admin/knowledge-base', icon: FileText, roles: ['admin'] },
+    { name: 'Ask Brain', path: '/admin/ask', icon: MessageCircle, roles: ['admin'] },
     { name: 'Users', path: '/admin/users', icon: Users, roles: ['admin'] },
     { name: 'Agents', path: '/admin/agents', icon: Bot, roles: ['admin'] },
-    { name: 'Onboarding', path: '/admin/onboarding', icon: GraduationCap, roles: ['admin'] },
-    { name: 'Analytics', path: '/admin/analytics', icon: BarChart3, roles: ['admin'] },
+    // { name: 'Onboarding', path: '/admin/onboarding', icon: GraduationCap, roles: ['admin'] },
+    // { name: 'Analytics', path: '/admin/analytics', icon: BarChart3, roles: ['admin'] },
     { name: 'Messages', path: '/admin/messages', icon: MessageSquare, roles: ['admin'] },
     // Employee routes
     { name: 'Dashboard', path: '/employee/dashboard', icon: LayoutDashboard, roles: ['employee'] },
@@ -52,7 +53,7 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
                         <Brain className="w-7 h-7 text-primary-foreground" />
                     </div>
                     <div>
-                        <h1 className="text-xl font-bold text-primary">cBrain</h1>
+                        <h1 className="text-xl font-bold text-primary">Siemens</h1>
                         <p className="text-xs text-muted-foreground">{dashboardLabel}</p>
                     </div>
                 </Link>
@@ -83,13 +84,6 @@ export const Sidebar: React.FC<SidebarProps> = ({ user, onLogout }) => {
 
             {/* User Profile & Logout */}
             <div className="px-4 py-6 border-t border-border">
-                <div className="flex items-center gap-3 px-4 py-3 mb-2">
-                    <img src={user.avatar} alt={user.name} className="w-10 h-10 rounded-full" />
-                    <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">{user.name}</p>
-                        <p className="text-xs text-muted-foreground capitalize">{user.role}</p>
-                    </div>
-                </div>
                 <button
                     onClick={onLogout}
                     className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-all"

@@ -2,7 +2,7 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
- * Playwright Configuration for cBrain E2E Tests
+ * Playwright Configuration for Siemens E2E Tests
  */
 export default defineConfig({
     testDir: './e2e',

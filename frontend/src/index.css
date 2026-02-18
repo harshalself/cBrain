@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* cBrain Design System
+/* Siemens Design System
    Color Palette:
    - Navy: #213448 (Primary)
    - Steel Blue: #547792 (Secondary)
@@ -92,12 +92,12 @@
     --black: 0 0% 0%;
     --transparent: 0 0% 0% / 0;
 
-    /* Custom cBrain tokens */
-    --cbrain-navy: 208 37% 21%;
-    --cbrain-steel: 207 27% 45%;
-    --cbrain-teal: 195 30% 67%;
-    --cbrain-cream: 40 33% 93%;
-    --cbrain-cream-light: 40 33% 97%;
+    /* Custom Siemens tokens */
+    --siemens-navy: 208 37% 21%;
+    --siemens-steel: 207 27% 45%;
+    --siemens-teal: 195 30% 67%;
+    --siemens-cream: 40 33% 93%;
+    --siemens-cream-light: 40 33% 97%;
 
     /* Glass effect */
     --glass-bg: 0 0% 100% / 0.7;
@@ -142,11 +142,11 @@
     --input: 208 30% 25%;
     --ring: 40 33% 93%;
 
-    --cbrain-navy: 208 37% 21%;
-    --cbrain-steel: 207 27% 45%;
-    --cbrain-teal: 195 30% 67%;
-    --cbrain-cream: 40 33% 93%;
-    --cbrain-cream-light: 40 33% 97%;
+    --siemens-navy: 208 37% 21%;
+    --siemens-steel: 207 27% 45%;
+    --siemens-teal: 195 30% 67%;
+    --siemens-cream: 40 33% 93%;
+    --siemens-cream-light: 40 33% 97%;
 
     --glass-bg: 208 37% 21% / 0.7;
     --glass-border: 208 37% 30% / 0.3;
@@ -225,9 +225,9 @@
 
   .shimmer {
     background: linear-gradient(90deg,
-        hsl(var(--cbrain-cream)) 0%,
-        hsl(var(--cbrain-teal) / 0.3) 50%,
-        hsl(var(--cbrain-cream)) 100%);
+        hsl(var(--siemens-cream)) 0%,
+        hsl(var(--siemens-teal) / 0.3) 50%,
+        hsl(var(--siemens-cream)) 100%);
     background-size: 200% 100%;
     animation: shimmer 3s infinite;
   }
@@ -357,5 +357,18 @@
     border: solid hsl(var(--primary-foreground));
     border-width: 0 2.5px 2.5px 0;
     transform: rotate(45deg);
+  }
+
+  /* Custom Scrollbar Utility */
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 5px;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-muted-foreground/10 rounded-full hover:bg-muted-foreground/30 transition-colors;
   }
 }

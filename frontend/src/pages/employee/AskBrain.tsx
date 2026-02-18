@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
-import { getCurrentUser } from '@/lib/mockData';
+import { useAuth } from '@/contexts/AuthContext';
 import { formatRelativeTime } from '@/lib/utils';
 import { Send, Brain, Clock, Sparkles, Loader2, AlertCircle, FileText, Copy, Check } from 'lucide-react';
 import chatService, { ChatMessage, ChatSessionWithSummary, SendMessageResponse } from '@/services/chatService';
@@ -12,7 +12,16 @@ import { SourceDocuments } from '@/components/chat/SourceDocuments';
 import MessageRating from '@/components/chat/MessageRating';
 
 const AskBrain: React.FC = () => {
-    const user = getCurrentUser();
+    const { user: authUser } = useAuth();
+    const user = authUser ? {
+        id: authUser.id.toString(),
+        name: authUser.name,
+        email: authUser.email,
+        role: authUser.role,
+        avatar: authUser.avatar || `https://api.dicebear.com/7.x/notionists/svg?seed=${authUser.email}&backgroundColor=b6e3f4,c0aede,d1d4f9`,
+        joinedDate: authUser.created_at || new Date().toISOString(),
+        status: 'active' as const,
+    } : null;
     const [question, setQuestion] = useState('');
     const [isSending, setIsSending] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -27,6 +36,9 @@ const AskBrain: React.FC = () => {
     const [messageMetadata, setMessageMetadata] = useState<Map<number, SendMessageResponse>>(new Map());
     const [copiedMessageId, setCopiedMessageId] = useState<number | null>(null);
 
+    // Refs
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+
     // Note: Using agentId = 1 as default - this should be configurable
     const DEFAULT_AGENT_ID = 1;
 
@@ -37,21 +49,30 @@ const AskBrain: React.FC = () => {
 
     // Load messages when active session changes
     useEffect(() => {
-        if (activeSession) {
+        if (activeSession?.id) {
             loadMessages(activeSession.id);
         }
-    }, [activeSession]);
+    }, [activeSession?.id]);
 
-    const loadSessions = async () => {
+    // Scroll to bottom when messages change or while sending
+    useEffect(() => {
+        if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [messages, isSending, activeSession?.id]);
+
+    const loadSessions = async (showLoading = true) => {
         try {
-            setIsLoading(true);
+            if (showLoading) setIsLoading(true);
             setError(null);
             const data = await chatService.getSessions(DEFAULT_AGENT_ID);
             setSessions(data);
 
             // Auto-select most recent session or create new one
             if (data.length > 0) {
-                setActiveSession(data[0]);
+                if (!activeSession) {
+                    setActiveSession(data[0]);
+                }
             } else {
                 await createNewSession();
             }
@@ -65,7 +86,7 @@ const AskBrain: React.FC = () => {
                 toast.error(errorMsg);
             }
         } finally {
-            setIsLoading(false);
+            if (showLoading) setIsLoading(false);
         }
     };
 
@@ -137,7 +158,7 @@ const AskBrain: React.FC = () => {
 
         try {
             // Build message history for context
-            const messageHistory = messages.map(m => ({
+            const messageHistory = (messages || []).map(m => ({
                 role: m.role,
                 content: m.content
             }));
@@ -170,7 +191,7 @@ const AskBrain: React.FC = () => {
             }
 
             // Reload session list to update last_message_at
-            loadSessions();
+            loadSessions(false);
         } catch (err: any) {
             const errorMsg = err.response?.data?.message || 'Failed to send message';
             toast.error(errorMsg);
@@ -205,7 +226,7 @@ const AskBrain: React.FC = () => {
     if (isLoading) {
         return (
             <div className="min-h-screen flex flex-col">
-                <DashboardHeader title="Ask cBrain" user={user} />
+                <DashboardHeader title="Ask Siemens" user={user} />
                 <div className="flex-1 flex items-center justify-center">
                     <div className="text-center">
                         <Loader2 className="w-8 h-8 animate-spin text-primary mx-auto mb-4" />
@@ -220,7 +241,7 @@ const AskBrain: React.FC = () => {
     if (agentNotConfigured) {
         return (
             <div className="min-h-screen flex flex-col">
-                <DashboardHeader title="Ask cBrain" user={user} />
+                <DashboardHeader title="Ask Siemens" user={user} />
                 <div className="flex-1 flex items-center justify-center">
                     <div className="text-center max-w-md px-6">
                         <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-amber-500/20 to-orange-500/20 mx-auto flex items-center justify-center mb-6">
@@ -250,14 +271,14 @@ const AskBrain: React.FC = () => {
     if (error && sessions.length === 0) {
         return (
             <div className="min-h-screen flex flex-col">
-                <DashboardHeader title="Ask cBrain" user={user} />
+                <DashboardHeader title="Ask Siemens" user={user} />
                 <div className="flex-1 flex items-center justify-center">
                     <div className="text-center max-w-md">
                         <AlertCircle className="w-12 h-12 text-destructive mx-auto mb-4" />
                         <h3 className="text-lg font-semibold mb-2">Failed to Load</h3>
                         <p className="text-muted-foreground mb-4">{error}</p>
                         <button
-                            onClick={loadSessions}
+                            onClick={() => loadSessions()}
                             className="px-4 py-2 bg-primary text-primary-foreground rounded-lg hover:bg-primary/90"
                         >
                             Try Again
@@ -269,8 +290,8 @@ const AskBrain: React.FC = () => {
     }
 
     return (
-        <div className="min-h-screen flex flex-col">
-            <DashboardHeader title="Ask cBrain" user={user} />
+        <div className="h-screen flex flex-col overflow-hidden bg-background">
+            <DashboardHeader title="Ask Siemens" user={user} />
 
             <div className="flex-1 flex overflow-hidden">
                 {/* Conversation Sidebar */}
@@ -284,147 +305,157 @@ const AskBrain: React.FC = () => {
                 />
 
                 {/* Main Chat Area */}
-                <div className="flex-1 p-6 lg:p-8 flex flex-col max-w-4xl mx-auto w-full overflow-y-auto">
-                    {/* Hero Section - Only show when no messages */}
-                    {messages.length === 0 && (
-                        <>
-                            <div className="text-center mb-8">
-                                <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-primary to-accent mx-auto flex items-center justify-center mb-4">
-                                    <Brain className="w-10 h-10 text-white" />
-                                </div>
-                                <h1 className="text-3xl font-bold text-foreground">How can I help you today?</h1>
-                                <p className="text-muted-foreground mt-2">
-                                    Ask me anything about company policies, processes, or documentation
-                                </p>
-                            </div>
-
-                            {/* Suggested Questions */}
-                            <div className="mb-8">
-                                <p className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
-                                    <Sparkles className="w-4 h-4" /> Suggested questions
-                                </p>
-                                <div className="flex flex-wrap gap-2">
-                                    {suggestedQuestions.map((q, idx) => (
-                                        <button
-                                            key={idx}
-                                            onClick={() => setQuestion(q)}
-                                            className="px-4 py-2 rounded-full bg-secondary/30 hover:bg-secondary/50 text-sm text-foreground transition-colors"
-                                        >
-                                            {q}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        </>
-                    )}
-
-                    {/* Conversation History */}
-                    {messages.length > 0 && (
-                        <div className="flex-1 space-y-6 mb-8 overflow-y-auto">
-                            {messages.map((message, idx) => (
-                                <div key={message.id} className="glass rounded-2xl p-6 space-y-4">
-                                    {message.role === 'user' ? (
-                                        <div className="flex items-start gap-3">
-                                            <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full" />
-                                            <div>
-                                                <p className="font-medium text-foreground">{message.content}</p>
-                                                <p className="text-xs text-muted-foreground mt-1">
-                                                    {formatRelativeTime(message.created_at)}
-                                                </p>
-                                            </div>
+                <div className="flex-1 flex flex-col min-w-0 bg-background overflow-hidden">
+                    {/* Messages Scroll Area */}
+                    <div className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-8">
+                        <div className="max-w-4xl mx-auto w-full">
+                            {/* Hero Section - Only show when no messages */}
+                            {messages.length === 0 && (
+                                <>
+                                    <div className="text-center mb-8">
+                                        <div className="w-20 h-20 rounded-2xl bg-primary text-primary-foreground mx-auto flex items-center justify-center mb-4 shadow-lg shadow-primary/20">
+                                            <Brain className="w-10 h-10" />
                                         </div>
-                                    ) : (
-                                        <div className="flex items-start gap-3">
-                                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center flex-shrink-0">
-                                                <Brain className="w-4 h-4 text-white" />
-                                            </div>
-                                            <div className="flex-1">
-                                                {/* AI Response with Markdown */}
-                                                <div className="prose prose-sm max-w-none dark:prose-invert text-foreground/90">
-                                                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                                                        {message.content}
-                                                    </ReactMarkdown>
-                                                </div>
+                                        <h1 className="text-3xl font-bold text-foreground">How can I help you today?</h1>
+                                        <p className="text-muted-foreground mt-2">
+                                            Ask me anything about company policies, processes, or documentation
+                                        </p>
+                                    </div>
 
-                                                {/* Source Documents */}
-                                                {messageMetadata.get(message.id)?.sources && (
-                                                    <SourceDocuments sources={messageMetadata.get(message.id)!.sources!} />
-                                                )}
+                                    {/* Suggested Questions */}
+                                    <div className="mb-8">
+                                        <p className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
+                                            <Sparkles className="w-4 h-4" /> Suggested questions
+                                        </p>
+                                        <div className="flex flex-wrap gap-2">
+                                            {suggestedQuestions.map((q, idx) => (
+                                                <button
+                                                    key={idx}
+                                                    onClick={() => setQuestion(q)}
+                                                    className="px-4 py-2 rounded-full bg-secondary/30 hover:bg-secondary/50 text-sm text-foreground transition-colors"
+                                                >
+                                                    {q}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </>
+                            )}
 
-                                                {/* Action Buttons */}
-                                                <div className="flex items-center gap-4 mt-4">
-                                                    <span className="text-xs text-muted-foreground flex items-center gap-1">
-                                                        <Clock className="w-3 h-3" />
-                                                        {messageMetadata.get(message.id)?.metadata?.response_time
-                                                            ? `${messageMetadata.get(message.id)!.metadata!.response_time}s`
-                                                            : 'Just now'}
-                                                    </span>
-
-                                                    <div className="flex items-center gap-2 ml-auto">
-                                                        <button
-                                                            onClick={() => handleCopyMessage(message.content, message.id)}
-                                                            className="p-1.5 rounded hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
-                                                            title="Copy to clipboard"
-                                                        >
-                                                            {copiedMessageId === message.id ? (
-                                                                <Check className="w-4 h-4 text-green-500" />
-                                                            ) : (
-                                                                <Copy className="w-4 h-4" />
-                                                            )}
-                                                        </button>
-                                                        <MessageRating
-                                                            messageId={message.id}
-                                                            currentRating={message.feedback as 'up' | 'down' | null}
-                                                        />
+                            {/* Conversation History */}
+                            {(messages || []).length > 0 && (
+                                <div className="space-y-6 mb-8">
+                                    {(messages || []).map((message, idx) => (
+                                        <div key={message.id} className="glass rounded-2xl p-6 space-y-4">
+                                            {message.role === 'user' ? (
+                                                <div className="flex items-start gap-3">
+                                                    <img src={user.avatar} alt={user.name} className="w-8 h-8 rounded-full" />
+                                                    <div>
+                                                        <p className="font-medium text-foreground">{message.content}</p>
+                                                        <p className="text-xs text-muted-foreground mt-1">
+                                                            {formatRelativeTime(message.created_at)}
+                                                        </p>
                                                     </div>
+                                                </div>
+                                            ) : (
+                                                <div className="flex items-start gap-3">
+                                                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                                                        <Brain className="w-4 h-4 text-primary-foreground" />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        {/* AI Response with Markdown */}
+                                                        <div className="prose prose-sm max-w-none dark:prose-invert text-foreground/90">
+                                                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                                                                {message.content}
+                                                            </ReactMarkdown>
+                                                        </div>
+
+                                                        {/* Source Documents */}
+                                                        {messageMetadata.get(message.id)?.sources && (
+                                                            <SourceDocuments sources={messageMetadata.get(message.id)!.sources!} />
+                                                        )}
+
+                                                        {/* Action Buttons */}
+                                                        <div className="flex items-center gap-4 mt-4">
+                                                            <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                                                <Clock className="w-3 h-3" />
+                                                                {messageMetadata.get(message.id)?.metadata?.response_time
+                                                                    ? `${messageMetadata.get(message.id)!.metadata!.response_time}s`
+                                                                    : 'Just now'}
+                                                            </span>
+
+                                                            <div className="flex items-center gap-2 ml-auto">
+                                                                <button
+                                                                    onClick={() => handleCopyMessage(message.content, message.id)}
+                                                                    className="p-1.5 rounded hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground"
+                                                                    title="Copy to clipboard"
+                                                                >
+                                                                    {copiedMessageId === message.id ? (
+                                                                        <Check className="w-4 h-4 text-green-500" />
+                                                                    ) : (
+                                                                        <Copy className="w-4 h-4" />
+                                                                    )}
+                                                                </button>
+                                                                <MessageRating
+                                                                    messageId={message.id}
+                                                                    currentRating={message.feedback as 'up' | 'down' | null}
+                                                                />
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+
+                                    {/* Loading indicator when sending */}
+                                    {isSending && (
+                                        <div className="glass rounded-2xl p-6">
+                                            <div className="flex items-start gap-3">
+                                                <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center flex-shrink-0">
+                                                    <Brain className="w-4 h-4 text-primary-foreground" />
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <Loader2 className="w-4 h-4 animate-spin text-primary" />
+                                                    <span className="text-muted-foreground">Thinking...</span>
                                                 </div>
                                             </div>
                                         </div>
                                     )}
-                                </div>
-                            ))}
-
-                            {/* Loading indicator when sending */}
-                            {isSending && (
-                                <div className="glass rounded-2xl p-6">
-                                    <div className="flex items-start gap-3">
-                                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary to-accent flex items-center justify-center flex-shrink-0">
-                                            <Brain className="w-4 h-4 text-white" />
-                                        </div>
-                                        <div className="flex items-center gap-2">
-                                            <Loader2 className="w-4 h-4 animate-spin text-primary" />
-                                            <span className="text-muted-foreground">Thinking...</span>
-                                        </div>
-                                    </div>
+                                    <div ref={messagesEndRef} />
                                 </div>
                             )}
                         </div>
-                    )}
+                    </div>
 
-                    {/* Input Form - Fixed at bottom */}
-                    <form onSubmit={handleSubmit} className="mt-auto">
-                        <div className="glass rounded-2xl p-2 flex items-center gap-2">
-                            <input
-                                type="text"
-                                value={question}
-                                onChange={(e) => setQuestion(e.target.value)}
-                                placeholder="Type your question here..."
-                                className="flex-1 bg-transparent px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none"
-                                disabled={isSending}
-                            />
-                            <button
-                                type="submit"
-                                disabled={!question.trim() || isSending}
-                                className="p-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                            >
-                                {isSending ? (
-                                    <Loader2 className="w-5 h-5 animate-spin" />
-                                ) : (
-                                    <Send className="w-5 h-5" />
-                                )}
-                            </button>
+                    {/* Input Area - Fixed at bottom */}
+                    <div className="p-6 lg:p-8 border-t border-border bg-background/50 backdrop-blur-sm">
+                        <div className="max-w-4xl mx-auto w-full">
+                            <form onSubmit={handleSubmit}>
+                                <div className="glass rounded-2xl p-2 flex items-center gap-2">
+                                    <input
+                                        type="text"
+                                        value={question}
+                                        onChange={(e) => setQuestion(e.target.value)}
+                                        placeholder="Type your question here..."
+                                        className="flex-1 bg-transparent px-4 py-3 text-foreground placeholder:text-muted-foreground focus:outline-none"
+                                        disabled={isSending}
+                                    />
+                                    <button
+                                        type="submit"
+                                        disabled={!question.trim() || isSending}
+                                        className="p-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+                                    >
+                                        {isSending ? (
+                                            <Loader2 className="w-5 h-5 animate-spin" />
+                                        ) : (
+                                            <Send className="w-5 h-5" />
+                                        )}
+                                    </button>
+                                </div>
+                            </form>
                         </div>
-                    </form>
+                    </div>
                 </div>
             </div>
         </div>

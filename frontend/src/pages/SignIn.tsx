@@ -26,7 +26,7 @@ const SignIn = () => {
 
             toast({
                 title: "Login successful!",
-                description: "Welcome back to Company Brain",
+                description: "Welcome back to Siemens",
             });
 
             // Redirect based on role
@@ -48,17 +48,14 @@ const SignIn = () => {
 
 
 
-    const handleResetPassword = () => {
-        // TODO: Implement password reset
-        console.log('Reset password clicked');
-    };
+
 
     const testimonials: Testimonial[] = [
         {
             avatarSrc: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop',
             name: 'Alex Morgan',
             handle: '@alexm',
-            text: 'cBrain transformed how our team shares knowledge!',
+            text: 'Siemens transformed how our team shares knowledge!',
         },
         {
             avatarSrc: 'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop',
@@ -84,7 +81,7 @@ const SignIn = () => {
                     <span className="font-light text-foreground tracking-tighter">Welcome Back</span>
                 </h1>
                 <p className="animate-element animate-delay-200 text-muted-foreground">
-                    Access your account and continue your journey with cBrain
+                    Access your account and continue your journey with Siemens
                 </p>
 
                 <form className="space-y-5" onSubmit={handleSignIn}>
@@ -108,18 +105,11 @@ const SignIn = () => {
                         />
                     </div>
 
-                    <div className="animate-element animate-delay-500 flex items-center justify-between text-sm">
+                    <div className="animate-element animate-delay-500 flex items-center text-sm">
                         <label className="flex items-center gap-3 cursor-pointer">
                             <input type="checkbox" name="rememberMe" className="custom-checkbox" />
                             <span className="text-foreground/90">Keep me signed in</span>
                         </label>
-                        <button
-                            type="button"
-                            onClick={handleResetPassword}
-                            className="hover:underline text-accent transition-colors"
-                        >
-                            Reset password
-                        </button>
                     </div>
 
                     <button
@@ -132,7 +122,7 @@ const SignIn = () => {
                 </form>
 
                 <p className="animate-element animate-delay-700 text-center text-sm text-muted-foreground">
-                    New to cBrain?{' '}
+                    New to Siemens?{' '}
                     <button
                         onClick={() => navigate('/signup')}
                         className="text-accent hover:underline transition-colors"

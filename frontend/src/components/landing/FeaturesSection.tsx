@@ -175,7 +175,7 @@ const FeatureMockup = ({ feature }: { feature: (typeof features)[0] }) => {
           </div>
           <div>
             <h4 className="font-semibold">AI Assistant</h4>
-            <p className="text-xs text-muted-foreground">Powered by cBrain</p>
+            <p className="text-xs text-muted-foreground">Powered by Siemens</p>
           </div>
         </div>
         <div className="space-y-3 min-h-[200px]">

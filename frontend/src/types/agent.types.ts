@@ -71,25 +71,14 @@ export interface TrainAgentDto {
 // Provider-specific model configurations
 export const PROVIDER_MODELS: Record<AIProvider, string[]> = {
     groq: [
-        'llama3-70b-8192',
-        'llama3-8b-8192',
-        'mixtral-8x7b-32768',
-        'gemma-7b-it'
+        "moonshotai/kimi-k2-instruct",
+        "meta-llama/llama-4-scout-17b-16e-instruct",
+        "llama-3.1-8b-instant",
+        "llama-3.3-70b-versatile",
     ],
-    openai: [
-        'gpt-4',
-        'gpt-4-turbo',
-        'gpt-3.5-turbo'
-    ],
-    anthropic: [
-        'claude-3-opus',
-        'claude-3-sonnet',
-        'claude-3-haiku'
-    ],
-    cohere: [
-        'command',
-        'command-light'
-    ]
+    openai: [],
+    anthropic: [],
+    cohere: []
 };
 
 // System prompt templates

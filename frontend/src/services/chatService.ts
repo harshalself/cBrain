@@ -15,6 +15,7 @@ export interface ChatSession {
 export interface ChatSessionWithSummary extends ChatSession {
     title?: string;
     message_count?: number;
+    last_message?: string;
     last_message_at?: string;
 }
 
@@ -95,7 +96,7 @@ class ChatService {
      */
     async getSessionHistory(sessionId: number): Promise<ChatMessage[]> {
         const response = await api.get(`/chat/sessions/${sessionId}/history`);
-        return response.data.data;
+        return response.data.data.messages || [];
     }
 
     /**

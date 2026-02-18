@@ -1,14 +1,23 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { DataTable } from '@/components/dashboard/DataTable';
-import { getCurrentUser } from '@/lib/mockData';
+import { useAuth } from '@/contexts/AuthContext';
 import { Search, FileText, BookOpen, File, Files, Loader2, RefreshCw } from 'lucide-react';
 import { documentService, Document } from '@/services/documentService';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 
 const MyDocuments: React.FC = () => {
-    const user = getCurrentUser();
+    const { user: authUser } = useAuth();
+    const user = authUser ? {
+        id: authUser.id.toString(),
+        name: authUser.name,
+        email: authUser.email,
+        role: authUser.role,
+        avatar: authUser.avatar || `https://api.dicebear.com/7.x/notionists/svg?seed=${authUser.email}&backgroundColor=b6e3f4,c0aede,d1d4f9`,
+        joinedDate: authUser.created_at || new Date().toISOString(),
+        status: 'active' as const,
+    } : null;
     const { toast } = useToast();
 
     // State
@@ -126,7 +135,7 @@ const MyDocuments: React.FC = () => {
                 {/* Search and Filter Bar */}
                 <div className="flex flex-col sm:flex-row gap-4">
                     <div className="flex-1">
-                        <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-secondary/20 border border-border">
+                        <div className="flex items-center gap-2 px-4 h-[46px] rounded-xl bg-secondary/20 border border-border">
                             <Search className="w-4 h-4 text-muted-foreground" />
                             <input
                                 type="text"
@@ -140,7 +149,7 @@ const MyDocuments: React.FC = () => {
                     <select
                         value={fileTypeFilter}
                         onChange={(e) => setFileTypeFilter(e.target.value)}
-                        className="px-4 py-3 rounded-xl bg-secondary/20 border border-border text-sm focus:outline-none focus:border-primary"
+                        className="px-4 h-[46px] rounded-xl bg-secondary/20 border border-border text-sm focus:outline-none focus:border-primary min-w-[140px]"
                     >
                         {fileTypes.map(type => (
                             <option key={type} value={type}>
@@ -153,6 +162,7 @@ const MyDocuments: React.FC = () => {
                         size="icon"
                         onClick={() => loadDocuments()}
                         disabled={isLoading}
+                        className="rounded-xl h-[46px] w-[46px]"
                     >
                         <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
                     </Button>
@@ -196,7 +206,7 @@ const MyDocuments: React.FC = () => {
                     <DataTable
                         data={filteredDocuments}
                         columns={columns}
-                        onRowClick={(doc) => console.log('Open document:', doc.id)}
+                        onRowClick={(doc) => window.open(doc.file_path, '_blank')}
                     />
                 )}
             </div>

@@ -21,7 +21,7 @@ interface AuthContextType {
     isLoading: boolean;
     login: (data: LoginData) => Promise<User>;
     register: (data: RegisterData) => Promise<User>;
-    logout: () => void;
+    logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -97,11 +97,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return userData as User;
     };
 
-    const logout = () => {
-        setUser(null);
-        setToken(null);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+    const logout = async () => {
+        try {
+            await authService.logout();
+        } catch (error) {
+            console.error('Logout request failed:', error);
+        } finally {
+            setUser(null);
+            setToken(null);
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+        }
     };
 
     return (

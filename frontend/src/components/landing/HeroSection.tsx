@@ -32,9 +32,9 @@ export const HeroSection = () => {
           [mask-image:radial-gradient(ellipse_at_100%_0%,black_10%,var(--transparent)_70%)]
           `}
         ></div>
-        
+
         {/* Grid Pattern */}
-        <div 
+        <div
           className="absolute inset-0 opacity-[0.03]"
           style={{
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23213448' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
@@ -76,7 +76,7 @@ export const HeroSection = () => {
               transition={{ duration: 0.5, delay: 0.2 }}
               className="text-lg text-muted-foreground mb-8 max-w-xl mx-auto lg:mx-0"
             >
-              Transform scattered company knowledge into an intelligent system that answers questions, 
+              Transform scattered company knowledge into an intelligent system that answers questions,
               trains new hires, and provides deep insights into organizational learning.
             </motion.p>
 
@@ -115,7 +115,7 @@ export const HeroSection = () => {
               </div>
               <div className="text-left">
                 <p className="font-semibold">500+ Companies</p>
-                <p className="text-sm text-muted-foreground">Trust cBrain for their knowledge</p>
+                <p className="text-sm text-muted-foreground">Trust Siemens for their knowledge</p>
               </div>
             </motion.div>
           </div>
@@ -135,7 +135,7 @@ export const HeroSection = () => {
                   <Sparkles className="w-6 h-6 text-primary-foreground" />
                 </div>
                 <div>
-                  <h3 className="font-semibold">cBrain Assistant</h3>
+                  <h3 className="font-semibold">Siemens Assistant</h3>
                   <p className="text-sm text-muted-foreground">Always ready to help</p>
                 </div>
                 <div className="ml-auto flex items-center gap-1">
@@ -201,11 +201,10 @@ export const HeroSection = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: 1.2 + card.delay }}
-                className={`absolute glass rounded-xl px-4 py-3 flex items-center gap-3 shadow-lg ${
-                  index === 0 ? "-top-4 -left-4" :
-                  index === 1 ? "-bottom-4 -right-4" :
-                  "top-1/2 -right-8 translate-y-[-50%]"
-                } ${index === 2 ? "hidden lg:flex" : ""}`}
+                className={`absolute glass rounded-xl px-4 py-3 flex items-center gap-3 shadow-lg ${index === 0 ? "-top-4 -left-4" :
+                    index === 1 ? "-bottom-4 -right-4" :
+                      "top-1/2 -right-8 translate-y-[-50%]"
+                  } ${index === 2 ? "hidden lg:flex" : ""}`}
               >
                 <div className="w-10 h-10 rounded-lg bg-accent/30 flex items-center justify-center">
                   <card.icon className="w-5 h-5 text-secondary" />

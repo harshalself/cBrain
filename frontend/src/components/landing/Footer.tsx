@@ -24,7 +24,7 @@ export const Footer = () => {
               <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
                 <Brain className="w-6 h-6 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold">cBrain</span>
+              <span className="text-xl font-bold">Siemens</span>
             </a>
             <p className="text-muted-foreground mb-6 max-w-xs">
               The AI-powered internal knowledge platform that transforms how your company learns.
@@ -66,7 +66,7 @@ export const Footer = () => {
         {/* Bottom Bar */}
         <div className="pt-8 border-t border-border flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-sm text-muted-foreground">
-            © 2024 cBrain. All rights reserved.
+            © 2024 Siemens. All rights reserved.
           </p>
           <p className="text-sm text-muted-foreground">
             Made with ❤️ for growing teams

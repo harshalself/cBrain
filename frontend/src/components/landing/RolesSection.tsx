@@ -81,7 +81,7 @@ export const RolesSection = () => {
             Built for Your Entire Team
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Every role in your organization benefits from cBrain's intelligent knowledge system.
+            Every role in your organization benefits from Siemens's intelligent knowledge system.
           </p>
         </motion.div>
 
@@ -126,7 +126,7 @@ export const RolesSection = () => {
                 </div>
                 <div>
                   <h3 className="text-2xl font-bold">{currentRole.title}</h3>
-                  <p className="text-muted-foreground">How cBrain helps</p>
+                  <p className="text-muted-foreground">How Siemens helps</p>
                 </div>
               </div>
 

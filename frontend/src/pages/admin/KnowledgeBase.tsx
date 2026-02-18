@@ -1,18 +1,11 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { DataTable } from '@/components/dashboard/DataTable';
-import { getCurrentUser } from '@/lib/mockData';
-import { Upload, Search, FolderTree as FolderIcon, Loader2, RefreshCw, FileText, Trash2 } from 'lucide-react';
-import { folderService, Folder, FolderNode } from '@/services/folderService';
+import { useAuth } from '@/contexts/AuthContext';
+import { Upload, Search, Loader2, RefreshCw, FileText, Trash2, History, Eye } from 'lucide-react';
 import { documentService, Document, DocumentListResponse } from '@/services/documentService';
-import FolderTree from '@/components/folders/FolderTree';
-import CreateFolderModal from '@/components/folders/CreateFolderModal';
-import RenameFolderModal from '@/components/folders/RenameFolderModal';
-import DeleteFolderDialog from '@/components/folders/DeleteFolderDialog';
 import UploadDocumentModal from '@/components/documents/UploadDocumentModal';
-import FolderBreadcrumb from '@/components/folders/FolderBreadcrumb';
-import { Separator } from '@/components/ui/separator';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import VersionHistoryModal from '@/components/documents/VersionHistoryModal';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -27,16 +20,18 @@ import {
 } from '@/components/ui/alert-dialog';
 
 const KnowledgeBase: React.FC = () => {
-    const user = getCurrentUser();
+    const { user: authUser } = useAuth();
+    const user = authUser ? {
+        id: authUser.id.toString(),
+        name: authUser.name,
+        email: authUser.email,
+        role: authUser.role,
+        avatar: authUser.avatar || `https://api.dicebear.com/7.x/notionists/svg?seed=${authUser.email}&backgroundColor=b6e3f4,c0aede,d1d4f9`,
+        joinedDate: authUser.created_at || new Date().toISOString(),
+        status: 'active' as const,
+    } : null;
     const { toast } = useToast();
     const [searchQuery, setSearchQuery] = useState('');
-
-    // Folder state
-    const [folders, setFolders] = useState<FolderNode[]>([]);
-    const [allFolders, setAllFolders] = useState<Folder[]>([]);
-    const [selectedFolderId, setSelectedFolderId] = useState<number | null>(null);
-    const [folderPath, setFolderPath] = useState<Array<{ id: number; name: string }>>([]);
-    const [isLoadingFolders, setIsLoadingFolders] = useState(true);
 
     // Document state
     const [documents, setDocuments] = useState<Document[]>([]);
@@ -52,53 +47,25 @@ const KnowledgeBase: React.FC = () => {
     const documentsPerPage = 20;
 
     // Modal state
-    const [showCreateModal, setShowCreateModal] = useState(false);
-    const [createParentId, setCreateParentId] = useState<number | null>(null);
-    const [showRenameModal, setShowRenameModal] = useState(false);
-    const [renameFolder, setRenameFolder] = useState<{ id: number; name: string } | null>(null);
-    const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-    const [deleteFolder, setDeleteFolder] = useState<{ id: number; name: string } | null>(null);
     const [showUploadModal, setShowUploadModal] = useState(false);
     const [showDeleteDocDialog, setShowDeleteDocDialog] = useState(false);
     const [deleteDocId, setDeleteDocId] = useState<number | null>(null);
     const [isDeletingDoc, setIsDeletingDoc] = useState(false);
 
-    // Load folders on mount
-    useEffect(() => {
-        loadFolders();
-    }, []);
+    // Version History state
+    const [showVersionModal, setShowVersionModal] = useState(false);
+    const [selectedDocId, setSelectedDocId] = useState<number | null>(null);
+    const [selectedDocName, setSelectedDocName] = useState('');
 
-    // Load documents when folder changes or search changes
+    // Load documents when search changes or page changes
     useEffect(() => {
         loadDocuments();
-    }, [selectedFolderId, searchQuery, currentPage]);
-
-    const loadFolders = async () => {
-        try {
-            setIsLoadingFolders(true);
-            const [treeData, flatData] = await Promise.all([
-                folderService.getFolderTree(),
-                folderService.getAllFolders(),
-            ]);
-            setFolders(treeData);
-            setAllFolders(flatData);
-        } catch (error) {
-            console.error('Failed to load folders:', error);
-            toast({
-                title: 'Error',
-                description: 'Failed to load folders',
-                variant: 'destructive',
-            });
-        } finally {
-            setIsLoadingFolders(false);
-        }
-    };
+    }, [searchQuery, currentPage]);
 
     const loadDocuments = useCallback(async () => {
         try {
             setIsLoadingDocuments(true);
             const response: DocumentListResponse = await documentService.getDocuments({
-                folder_id: selectedFolderId ?? undefined,
                 search: searchQuery || undefined,
                 page: currentPage,
                 limit: documentsPerPage,
@@ -130,54 +97,7 @@ const KnowledgeBase: React.FC = () => {
         } finally {
             setIsLoadingDocuments(false);
         }
-    }, [selectedFolderId, searchQuery, currentPage, toast]);
-
-    // Build folder path for breadcrumb
-    const buildFolderPath = (folderId: number | null): Array<{ id: number; name: string }> => {
-        if (folderId === null) return [];
-
-        const path: Array<{ id: number; name: string }> = [];
-        let currentId: number | null = folderId;
-
-        while (currentId !== null) {
-            const folder = allFolders.find(f => f.id === currentId);
-            if (folder) {
-                path.unshift({ id: folder.id, name: folder.name });
-                currentId = folder.parent_id;
-            } else {
-                break;
-            }
-        }
-
-        return path;
-    };
-
-    const handleSelectFolder = (folderId: number | null) => {
-        setSelectedFolderId(folderId);
-        setFolderPath(buildFolderPath(folderId));
-        setCurrentPage(1); // Reset to first page when changing folders
-    };
-
-    const handleCreateFolder = (parentId: number | null) => {
-        setCreateParentId(parentId);
-        setShowCreateModal(true);
-    };
-
-    const handleRenameFolder = (folderId: number) => {
-        const folder = allFolders.find(f => f.id === folderId);
-        if (folder) {
-            setRenameFolder({ id: folder.id, name: folder.name });
-            setShowRenameModal(true);
-        }
-    };
-
-    const handleDeleteFolder = (folderId: number) => {
-        const folder = allFolders.find(f => f.id === folderId);
-        if (folder) {
-            setDeleteFolder({ id: folder.id, name: folder.name });
-            setShowDeleteDialog(true);
-        }
-    };
+    }, [searchQuery, currentPage, toast]);
 
     const handleDeleteDocument = async () => {
         if (!deleteDocId) return;
@@ -231,10 +151,12 @@ const KnowledgeBase: React.FC = () => {
             docx: 'bg-blue-500/10 text-blue-700',
             md: 'bg-purple-500/10 text-purple-700',
             txt: 'bg-gray-500/10 text-gray-700',
+            csv: 'bg-emerald-500/10 text-emerald-700',
+            json: 'bg-yellow-500/10 text-yellow-700',
         };
 
         return (
-            <span className={`px-2 py-1 rounded text-xs font-medium ${colors[fileType]}`}>
+            <span className={`px-2 py-1 rounded text-xs font-medium ${colors[fileType as keyof typeof colors] || colors.txt}`}>
                 {fileType.toUpperCase()}
             </span>
         );
@@ -285,7 +207,7 @@ const KnowledgeBase: React.FC = () => {
             label: 'Size',
             render: (doc: Document) => (
                 <span className="text-sm text-muted-foreground">
-                    {documentService.formatFileSize(doc.file_size)}
+                    {documentService.formatFileSize(doc.file_size || 0)}
                 </span>
             ),
         },
@@ -293,17 +215,43 @@ const KnowledgeBase: React.FC = () => {
             key: 'actions',
             label: '',
             render: (doc: Document) => (
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        setDeleteDocId(doc.id);
-                        setShowDeleteDocDialog(true);
-                    }}
-                >
-                    <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
-                </Button>
+                <div className="flex items-center gap-1 justify-end">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            window.open(doc.file_path, '_blank');
+                        }}
+                        title="View Document"
+                    >
+                        <Eye className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedDocId(doc.id);
+                            setSelectedDocName(doc.name);
+                            setShowVersionModal(true);
+                        }}
+                        title="View Version History"
+                    >
+                        <History className="h-4 w-4 text-muted-foreground hover:text-primary" />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            setDeleteDocId(doc.id);
+                            setShowDeleteDocDialog(true);
+                        }}
+                    >
+                        <Trash2 className="h-4 w-4 text-muted-foreground hover:text-destructive" />
+                    </Button>
+                </div>
             ),
         },
     ];
@@ -312,162 +260,105 @@ const KnowledgeBase: React.FC = () => {
         <div className="min-h-screen">
             <DashboardHeader title="Knowledge Base" user={user} />
 
-            <div className="flex">
-                {/* Folder Sidebar */}
-                <aside className="w-64 border-r border-border bg-card/50 min-h-[calc(100vh-80px)]">
-                    <div className="p-4">
-                        <div className="flex items-center gap-2 mb-4">
-                            <FolderIcon className="h-5 w-5 text-muted-foreground" />
-                            <h3 className="font-semibold">Folders</h3>
-                        </div>
-
-                        {isLoadingFolders ? (
-                            <div className="flex items-center justify-center py-8">
-                                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                            </div>
-                        ) : (
-                            <ScrollArea className="h-[calc(100vh-200px)]">
-                                <FolderTree
-                                    folders={folders}
-                                    selectedFolderId={selectedFolderId}
-                                    onSelectFolder={handleSelectFolder}
-                                    onCreateFolder={handleCreateFolder}
-                                    onRenameFolder={handleRenameFolder}
-                                    onDeleteFolder={handleDeleteFolder}
-                                />
-                            </ScrollArea>
-                        )}
-                    </div>
-                </aside>
-
-                {/* Main Content */}
-                <div className="flex-1 p-6 lg:p-8 space-y-6">
-                    {/* Breadcrumb */}
-                    {selectedFolderId !== null && (
-                        <FolderBreadcrumb
-                            folderPath={folderPath}
-                            onNavigate={handleSelectFolder}
-                        />
-                    )}
-
-                    {/* Action Bar */}
-                    <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-                        <div className="flex-1 w-full sm:w-auto">
-                            <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-secondary/20 border border-border w-full sm:w-96">
-                                <Search className="w-4 h-4 text-muted-foreground" />
-                                <input
-                                    type="text"
-                                    placeholder="Search documents..."
-                                    value={searchQuery}
-                                    onChange={(e) => {
-                                        setSearchQuery(e.target.value);
-                                        setCurrentPage(1);
-                                    }}
-                                    className="bg-transparent text-sm focus:outline-none flex-1"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="flex gap-2">
-                            <Button
-                                variant="outline"
-                                size="icon"
-                                onClick={() => loadDocuments()}
-                                disabled={isLoadingDocuments}
-                            >
-                                <RefreshCw className={`h-4 w-4 ${isLoadingDocuments ? 'animate-spin' : ''}`} />
-                            </Button>
-                            <Button
-                                onClick={() => setShowUploadModal(true)}
-                                className="flex items-center gap-2"
-                            >
-                                <Upload className="w-4 h-4" />
-                                Upload Document
-                            </Button>
+            <div className="p-6 lg:p-8 space-y-6">
+                {/* Action Bar */}
+                <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+                    <div className="flex-1 w-full sm:w-auto">
+                        <div className="flex items-center gap-2 px-4 h-[46px] rounded-xl bg-secondary/20 border border-border w-full sm:w-96">
+                            <Search className="w-4 h-4 text-muted-foreground" />
+                            <input
+                                type="text"
+                                placeholder="Search documents..."
+                                value={searchQuery}
+                                onChange={(e) => {
+                                    setSearchQuery(e.target.value);
+                                    setCurrentPage(1);
+                                }}
+                                className="bg-transparent text-sm focus:outline-none flex-1"
+                            />
                         </div>
                     </div>
 
-                    {/* Stats */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div className="glass rounded-xl p-4">
-                            <p className="text-sm text-muted-foreground">Total Documents</p>
-                            <p className="text-2xl font-bold text-foreground mt-1">{documentStats.total}</p>
-                        </div>
-                        <div className="glass rounded-xl p-4">
-                            <p className="text-sm text-muted-foreground">Ready</p>
-                            <p className="text-2xl font-bold text-green-600 mt-1">{documentStats.ready}</p>
-                        </div>
-                        <div className="glass rounded-xl p-4">
-                            <p className="text-sm text-muted-foreground">Processing</p>
-                            <p className="text-2xl font-bold text-blue-600 mt-1">{documentStats.processing}</p>
-                        </div>
-                        <div className="glass rounded-xl p-4">
-                            <p className="text-sm text-muted-foreground">Failed</p>
-                            <p className="text-2xl font-bold text-red-600 mt-1">{documentStats.failed}</p>
-                        </div>
+                    <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => loadDocuments()}
+                            disabled={isLoadingDocuments}
+                            className="rounded-xl h-[46px] w-[46px]"
+                        >
+                            <RefreshCw className={`h-4 w-4 ${isLoadingDocuments ? 'animate-spin' : ''}`} />
+                        </Button>
+                        <Button
+                            onClick={() => setShowUploadModal(true)}
+                            className="flex items-center gap-2 rounded-xl h-[46px] px-6 shadow-lg shadow-primary/25"
+                        >
+                            <Upload className="w-4 h-4" />
+                            Upload Document
+                        </Button>
                     </div>
-
-                    {/* Documents Table */}
-                    {isLoadingDocuments ? (
-                        <div className="flex items-center justify-center py-12">
-                            <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-                        </div>
-                    ) : documents.length === 0 ? (
-                        <div className="text-center py-12">
-                            <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                            <h3 className="text-lg font-medium">No documents found</h3>
-                            <p className="text-muted-foreground mt-1">
-                                {searchQuery ? 'Try a different search term' : 'Upload your first document to get started'}
-                            </p>
-                            <Button
-                                onClick={() => setShowUploadModal(true)}
-                                className="mt-4"
-                            >
-                                <Upload className="w-4 h-4 mr-2" />
-                                Upload Document
-                            </Button>
-                        </div>
-                    ) : (
-                        <DataTable
-                            data={documents}
-                            columns={columns}
-                            onRowClick={(doc) => console.log('View document:', doc.id)}
-                        />
-                    )}
                 </div>
+
+                {/* Stats */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <div className="glass rounded-xl p-4">
+                        <p className="text-sm text-muted-foreground">Total Documents</p>
+                        <p className="text-2xl font-bold text-foreground mt-1">{documentStats.total}</p>
+                    </div>
+                    <div className="glass rounded-xl p-4">
+                        <p className="text-sm text-muted-foreground">Ready</p>
+                        <p className="text-2xl font-bold text-green-600 mt-1">{documentStats.ready}</p>
+                    </div>
+                    <div className="glass rounded-xl p-4">
+                        <p className="text-sm text-muted-foreground">Processing</p>
+                        <p className="text-2xl font-bold text-blue-600 mt-1">{documentStats.processing}</p>
+                    </div>
+                    <div className="glass rounded-xl p-4">
+                        <p className="text-sm text-muted-foreground">Failed</p>
+                        <p className="text-2xl font-bold text-red-600 mt-1">{documentStats.failed}</p>
+                    </div>
+                </div>
+
+                {/* Documents Table */}
+                {isLoadingDocuments ? (
+                    <div className="flex items-center justify-center py-12">
+                        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                    </div>
+                ) : documents.length === 0 ? (
+                    <div className="text-center py-12">
+                        <FileText className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                        <h3 className="text-lg font-medium">No documents found</h3>
+                        <p className="text-muted-foreground mt-1">
+                            {searchQuery ? 'Try a different search term' : 'Upload your first document to get started'}
+                        </p>
+                        <Button
+                            onClick={() => setShowUploadModal(true)}
+                            className="mt-4"
+                        >
+                            <Upload className="w-4 h-4 mr-2" />
+                            Upload Document
+                        </Button>
+                    </div>
+                ) : (
+                    <DataTable
+                        data={documents}
+                        columns={columns}
+                        onRowClick={(doc) => window.open(doc.file_path, '_blank')}
+                    />
+                )}
             </div>
-
-            {/* Modals */}
-            <CreateFolderModal
-                open={showCreateModal}
-                onOpenChange={setShowCreateModal}
-                parentFolderId={createParentId}
-                allFolders={allFolders}
-                onSuccess={loadFolders}
-            />
-
-            <RenameFolderModal
-                open={showRenameModal}
-                onOpenChange={setShowRenameModal}
-                folderId={renameFolder?.id || null}
-                currentName={renameFolder?.name || ''}
-                onSuccess={loadFolders}
-            />
-
-            <DeleteFolderDialog
-                open={showDeleteDialog}
-                onOpenChange={setShowDeleteDialog}
-                folderId={deleteFolder?.id || null}
-                folderName={deleteFolder?.name || ''}
-                onSuccess={loadFolders}
-            />
 
             <UploadDocumentModal
                 open={showUploadModal}
                 onOpenChange={setShowUploadModal}
-                folderId={selectedFolderId}
-                allFolders={allFolders}
                 onSuccess={loadDocuments}
+            />
+
+            <VersionHistoryModal
+                open={showVersionModal}
+                onOpenChange={setShowVersionModal}
+                documentId={selectedDocId}
+                documentName={selectedDocName}
             />
 
             {/* Delete Document Dialog */}

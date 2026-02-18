@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
-import { getCurrentUser } from '@/lib/mockData';
+import { useAuth } from '@/contexts/AuthContext';
 import agentService from '@/services/agentService';
 import { Agent } from '@/types/agent.types';
 import { Plus, Loader2, AlertCircle, Pencil, Trash2, Bot } from 'lucide-react';
@@ -56,7 +56,16 @@ const DeleteDialog: React.FC<DeleteDialogProps> = ({ agent, onConfirm, onCancel,
 };
 
 const AgentListPage: React.FC = () => {
-    const user = getCurrentUser();
+    const { user: authUser } = useAuth();
+    const user = authUser ? {
+        id: authUser.id.toString(),
+        name: authUser.name,
+        email: authUser.email,
+        role: authUser.role,
+        avatar: authUser.avatar || `https://api.dicebear.com/7.x/notionists/svg?seed=${authUser.email}&backgroundColor=b6e3f4,c0aede,d1d4f9`,
+        joinedDate: authUser.created_at || new Date().toISOString(),
+        status: 'active' as const,
+    } : null;
     const navigate = useNavigate();
     const [agents, setAgents] = useState<Agent[]>([]);
     const [isLoading, setIsLoading] = useState(true);

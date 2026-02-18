@@ -8,14 +8,14 @@ const steps = [
     number: "01",
     icon: Upload,
     title: "Upload Your Knowledge",
-    description: "Connect your existing tools—Notion, Google Drive, GitHub, or simply upload documents. cBrain ingests and indexes everything.",
+    description: "Connect your existing tools—Notion, Google Drive, GitHub, or simply upload documents. Siemens ingests and indexes everything.",
     color: "from-primary to-secondary",
   },
   {
     number: "02",
     icon: MessageSquare,
     title: "Ask Anything",
-    description: "Employees ask questions in natural language. cBrain searches through all your documentation and provides accurate, sourced answers.",
+    description: "Employees ask questions in natural language. Siemens searches through all your documentation and provides accurate, sourced answers.",
     color: "from-secondary to-accent",
   },
   {
@@ -50,7 +50,7 @@ export const HowItWorksSection = () => {
             <span className="text-gradient">Smarter Knowledge</span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Get started in minutes, not months. cBrain makes knowledge management effortless.
+            Get started in minutes, not months. Siemens makes knowledge management effortless.
           </p>
         </motion.div>
 

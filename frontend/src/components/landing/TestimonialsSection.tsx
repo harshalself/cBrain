@@ -5,7 +5,7 @@ import { Star, Quote } from "lucide-react";
 
 const testimonials = [
   {
-    quote: "cBrain cut our onboarding time in half. New engineers are productive within days, not months.",
+    quote: "Siemens cut our onboarding time in half. New engineers are productive within days, not months.",
     author: "Sarah Chen",
     role: "VP of Engineering",
     company: "TechFlow Inc.",
@@ -51,7 +51,7 @@ export const TestimonialsSection = () => {
             Loved by Teams Everywhere
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            See what companies are saying about transforming their knowledge management with cBrain.
+            See what companies are saying about transforming their knowledge management with Siemens.
           </p>
         </motion.div>
 

@@ -10,7 +10,16 @@ import { analyticsService } from '@/services/analyticsService';
 import { useToast } from '@/hooks/use-toast';
 
 const EmployeeDashboard: React.FC = () => {
-    const { user } = useAuth();
+    const { user: authUser } = useAuth();
+    const user = authUser ? {
+        id: authUser.id.toString(),
+        name: authUser.name,
+        email: authUser.email,
+        role: authUser.role,
+        avatar: authUser.avatar || `https://api.dicebear.com/7.x/notionists/svg?seed=${authUser.email}&backgroundColor=b6e3f4,c0aede,d1d4f9`,
+        joinedDate: authUser.created_at || new Date().toISOString(),
+        status: 'active' as const,
+    } : null;
     const { toast } = useToast();
 
     // State
@@ -77,15 +86,7 @@ const EmployeeDashboard: React.FC = () => {
             <div className="min-h-screen">
                 <DashboardHeader
                     title="Dashboard"
-                    user={{
-                        id: user.id.toString(),
-                        name: user.name,
-                        email: user.email,
-                        role: user.role,
-                        avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`,
-                        joinedDate: new Date().toISOString(),
-                        status: 'active' as const,
-                    }}
+                    user={user!}
                 />
                 <div className="flex items-center justify-center py-24">
                     <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -98,15 +99,7 @@ const EmployeeDashboard: React.FC = () => {
         <div className="min-h-screen">
             <DashboardHeader
                 title="Dashboard"
-                user={{
-                    id: user.id.toString(),
-                    name: user.name,
-                    email: user.email,
-                    role: user.role,
-                    avatar: `https://api.dicebear.com/7.x/avataaars/svg?seed=${user.email}`,
-                    joinedDate: new Date().toISOString(),
-                    status: 'active' as const,
-                }}
+                user={user!}
             />
 
             <div className="p-6 lg:p-8 space-y-8">
@@ -121,7 +114,7 @@ const EmployeeDashboard: React.FC = () => {
                                 Welcome back, {user.name.split(' ')[0]}! 👋
                             </h2>
                             <p className="text-muted-foreground mt-1">
-                                What would you like to learn today? Ask cBrain anything about company policies, processes, or documentation.
+                                What would you like to learn today? Ask Siemens anything about company policies, processes, or documentation.
                             </p>
                         </div>
                         <Link
@@ -129,7 +122,7 @@ const EmployeeDashboard: React.FC = () => {
                             className="flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-primary-foreground hover:bg-primary/90 transition-colors font-medium shadow-lg shadow-primary/25"
                         >
                             <Brain className="w-5 h-5" />
-                            Ask cBrain
+                            Ask Siemens
                             <ArrowRight className="w-4 h-4" />
                         </Link>
                     </div>

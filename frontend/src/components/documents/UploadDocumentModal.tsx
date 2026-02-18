@@ -1,6 +1,5 @@
 import { useState, useRef } from 'react';
 import { documentService, UploadDocumentRequest } from '@/services/documentService';
-import { Folder } from '@/services/folderService';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -12,21 +11,12 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { Upload, File, X, Loader2 } from 'lucide-react';
 
 interface UploadDocumentModalProps {
     open: boolean;
     onOpenChange: (open: boolean) => void;
-    folderId?: number | null;
-    allFolders?: Folder[];
     onSuccess: () => void;
 }
 
@@ -36,15 +26,10 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 export default function UploadDocumentModal({
     open,
     onOpenChange,
-    folderId,
-    allFolders = [],
     onSuccess,
 }: UploadDocumentModalProps) {
     const [file, setFile] = useState<File | null>(null);
     const [name, setName] = useState('');
-    const [selectedFolderId, setSelectedFolderId] = useState<string>(
-        folderId?.toString() || 'root'
-    );
     const [tags, setTags] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
@@ -113,7 +98,6 @@ export default function UploadDocumentModal({
             const uploadData: UploadDocumentRequest = {
                 file,
                 name: name.trim() || file.name,
-                folder_id: selectedFolderId === 'root' ? null : parseInt(selectedFolderId),
                 tags: tags.trim() ? tags.split(',').map(t => t.trim()).filter(Boolean) : [],
             };
 
@@ -130,7 +114,6 @@ export default function UploadDocumentModal({
             setFile(null);
             setName('');
             setTags('');
-            setSelectedFolderId('root');
             setUploadProgress(0);
 
             onSuccess();
@@ -153,7 +136,6 @@ export default function UploadDocumentModal({
             setFile(null);
             setName('');
             setTags('');
-            setSelectedFolderId(folderId?.toString() || 'root');
             setUploadProgress(0);
         }
         onOpenChange(newOpen);
@@ -237,28 +219,6 @@ export default function UploadDocumentModal({
                                 onChange={(e) => setName(e.target.value)}
                                 disabled={isSubmitting}
                             />
-                        </div>
-
-                        {/* Folder Selection */}
-                        <div className="space-y-2">
-                            <Label htmlFor="folder">Folder (Optional)</Label>
-                            <Select
-                                value={selectedFolderId}
-                                onValueChange={setSelectedFolderId}
-                                disabled={isSubmitting}
-                            >
-                                <SelectTrigger id="folder">
-                                    <SelectValue placeholder="Select folder" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="root">📁 Root (No Folder)</SelectItem>
-                                    {allFolders.map((folder) => (
-                                        <SelectItem key={folder.id} value={folder.id.toString()}>
-                                            📂 {folder.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
                         </div>
 
                         {/* Tags */}

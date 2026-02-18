@@ -79,6 +79,14 @@ class AgentService {
         const response = await api.get(`${this.basePath}/${id}/training-analytics`);
         return response.data.data;
     }
+
+    /**
+     * Get all available provider models from the system
+     */
+    async getProviderModels(): Promise<any[]> {
+        const response = await api.get('/provider-models');
+        return response.data.data;
+    }
 }
 
 // Export singleton instance

@@ -106,7 +106,7 @@ export const ProblemSection = () => {
                 <span className="text-secondary">Instant Answers.</span>
               </h3>
               <p className="text-muted-foreground mb-6">
-                cBrain transforms your scattered documentation into a living, intelligent 
+                Siemens transforms your scattered documentation into a living, intelligent
                 knowledge system that grows with your company.
               </p>
               <ul className="space-y-3">
@@ -135,7 +135,7 @@ export const ProblemSection = () => {
                   transition={{ duration: 0.5, delay: 0.7, type: "spring" }}
                   className="absolute inset-1/4 bg-gradient-to-br from-primary to-secondary rounded-3xl flex items-center justify-center shadow-2xl shadow-primary/30"
                 >
-                  <span className="text-4xl font-bold text-primary-foreground">cBrain</span>
+                  <span className="text-4xl font-bold text-primary-foreground">Siemens</span>
                 </motion.div>
 
                 {/* Orbiting Elements */}

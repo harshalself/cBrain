@@ -16,7 +16,7 @@ import { NewMessageEvent } from '@/hooks/useSocket';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
-import { getCurrentUser } from '@/lib/mockData';
+// Removed mockData import
 
 /**
  * Messages Page
@@ -31,8 +31,16 @@ import { getCurrentUser } from '@/lib/mockData';
 export const MessagesPage: React.FC = () => {
     const queryClient = useQueryClient();
     const { socket, isConnected } = useSocketContext();
-    const { user } = useAuth();
-    const mockUser = getCurrentUser();
+    const { user: authUser } = useAuth();
+    const user = authUser ? {
+        id: authUser.id.toString(),
+        name: authUser.name,
+        email: authUser.email,
+        role: authUser.role,
+        avatar: authUser.avatar || `https://api.dicebear.com/7.x/notionists/svg?seed=${authUser.email}&backgroundColor=b6e3f4,c0aede,d1d4f9`,
+        joinedDate: authUser.created_at || new Date().toISOString(),
+        status: 'active' as const,
+    } : null;
 
     const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
     const [isNewConversationOpen, setIsNewConversationOpen] = useState(false);
@@ -214,7 +222,7 @@ export const MessagesPage: React.FC = () => {
     return (
         <div className="min-h-screen">
             {/* Dashboard Header */}
-            <DashboardHeader title="Messages" user={mockUser} />
+            <DashboardHeader title="Messages" user={user!} />
 
             {/* Main Content */}
             <div className="p-6 lg:p-8">

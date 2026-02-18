@@ -1,6 +1,6 @@
 # 🎭 Playwright E2E Testing Demo
 
-Welcome to your first browser testing experience! This demo will show you how easy it is to test your cBrain app with Playwright.
+Welcome to your first browser testing experience! This demo will show you how easy it is to test your Siemens app with Playwright.
 
 ## 📁 What Was Created
 
@@ -18,7 +18,7 @@ frontend/
 ### Prerequisites
 1. **Backend must be running** on port 8000
 2. **Create a test user** with these credentials:
-   - Email: `admin@cbrain.com`
+   - Email: `admin@siemens.com`
    - Password: `Admin@123`
    - You can do this via the signup page or backend directly
 
@@ -104,7 +104,7 @@ test('should login successfully', async ({ page }) => {
   await page.goto('/signin');
   
   // 2. Fill the form
-  await page.fill('input[type="email"]', 'admin@cbrain.com');
+  await page.fill('input[type="email"]', 'admin@siemens.com');
   await page.fill('input[type="password"]', 'Admin@123');
   
   // 3. Click submit

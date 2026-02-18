@@ -54,5 +54,9 @@ export const authService = {
     getProfile: async (): Promise<{ data: UserData }> => {
         const response = await api.get('/users/me');
         return response.data;
+    },
+
+    logout: async (): Promise<void> => {
+        await api.post('/users/logout');
     }
 };
