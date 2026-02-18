@@ -23,7 +23,7 @@ export const createTable = async () => {
     table.text("email").unique().notNullable();
     table.text("password").notNullable();
     table.text("phone_number").nullable();
-    // Company Brain fields
+    // Siemens fields
     table.enum("role", ["employee", "admin"]).defaultTo("employee");
     table.boolean("onboarding_completed").defaultTo(false);
     table.timestamp("last_login").nullable();

@@ -11,7 +11,7 @@ import { searchConfig } from './search.config';
 
 /**
  * Default Chat Configuration
- * Production-ready settings optimized for Company Brain
+ * Production-ready settings optimized for Siemens
  */
 export const defaultChatConfig: ChatConfig = {
   // ========================

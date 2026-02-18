@@ -130,7 +130,7 @@ ALTER TABLE documents ADD COLUMN tags TEXT[];
 
 **What's Done**:
 - ✅ All core tables created
-- ✅ All Company Brain-specific tables added
+- ✅ All Siemens-specific tables added
 - ✅ Removed unnecessary source types
 - ✅ Proper foreign keys and indexes
 - ✅ Seed data for templates and defaults

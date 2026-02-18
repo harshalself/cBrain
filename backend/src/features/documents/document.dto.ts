@@ -6,10 +6,6 @@ export class UploadDocumentDto {
     @IsOptional()
     name?: string; // If not provided, use original filename
 
-    @IsInt()
-    @IsOptional()
-    folder_id?: number;
-
     @IsArray()
     @IsString({ each: true })
     @IsOptional()
@@ -20,10 +16,6 @@ export class UpdateDocumentDto {
     @IsString()
     @IsOptional()
     name?: string;
-
-    @IsInt()
-    @IsOptional()
-    folder_id?: number;
 
     @IsArray()
     @IsString({ each: true })
@@ -55,11 +47,6 @@ export class DocumentQueryDto {
     @IsEnum(["pdf", "docx", "md", "txt"])
     @IsOptional()
     file_type?: "pdf" | "docx" | "md" | "txt";
-
-    @Type(() => Number)
-    @IsInt()
-    @IsOptional()
-    folder_id?: number;
 
     @IsEnum(["processing", "ready", "failed"])
     @IsOptional()

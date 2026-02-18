@@ -8,7 +8,6 @@ export const createTable = async () => {
         table.increments("id").primary();
         table.text("name").notNullable();
         table.text("original_name").notNullable();
-        table.integer("folder_id").references("id").inTable("folders").onDelete("SET NULL").nullable();
         table.enum("file_type", ["pdf", "docx", "md", "txt"]).notNullable();
         table.integer("file_size").nullable();
         table.text("file_path").notNullable();
@@ -26,7 +25,6 @@ export const createTable = async () => {
 
     // Create indexes
     await DB.raw(`
-    CREATE INDEX idx_documents_folder ON ${DOCUMENTS_TABLE}(folder_id);
     CREATE INDEX idx_documents_status ON ${DOCUMENTS_TABLE}(status);
     CREATE INDEX idx_documents_uploaded_by ON ${DOCUMENTS_TABLE}(uploaded_by);
   `);

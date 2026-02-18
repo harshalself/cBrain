@@ -2,6 +2,7 @@ import { Router } from "express";
 import Route from "../../interfaces/route.interface";
 import DocumentController from "./document.controller";
 import validationMiddleware from "../../middlewares/validation.middleware";
+import authMiddleware from "../../middlewares/auth.middleware";
 import { UpdateDocumentDto, DocumentParamsDto, DocumentQueryDto } from "./document.dto";
 import multer from "multer";
 
@@ -54,15 +55,12 @@ class DocumentRoute implements Route {
             this.documentController.deleteDocument
         );
 
-        // Move document to folder
-        this.router.put(
-            `${this.path}/:id/move`,
-            this.documentController.moveDocument
-        );
+
 
         // Get version history for a document
         this.router.get(
             `${this.path}/:id/versions`,
+            authMiddleware, // Ensure this import is available
             validationMiddleware(DocumentParamsDto, "params", false, []),
             this.documentController.getVersionHistory
         );

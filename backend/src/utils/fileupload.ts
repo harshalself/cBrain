@@ -89,14 +89,13 @@ export const uploadMulterFile = async (
     }
 
     // Construct the proper URL for Supabase Storage
-    // Format should be: https://[project-ref].storage.supabase.co/storage/v1/object/public/[bucket-name]/[file-path]
+    // Format should be: https://[project-ref].supabase.co/storage/v1/object/public/[bucket-name]/[file-path]
     const bucketName = process.env.AWS_BUCKET_NAME;
-    const endpoint = process.env.AWS_ENDPOINT?.replace("/s3", "");
+    const endpoint = process.env.AWS_ENDPOINT?.replace(".storage.supabase.co/storage/v1/s3", ".supabase.co/storage/v1");
+    const publicUrl = `${endpoint}/object/public/${bucketName}/${filePath}`;
 
     return {
-      Location:
-        uploadResult.Location ||
-        `${endpoint}/object/public/${bucketName}/${filePath}`,
+      Location: publicUrl,
       Key: uploadResult.Key,
       Bucket: uploadResult.Bucket,
       ETag: uploadResult.ETag,

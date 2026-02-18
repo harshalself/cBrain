@@ -19,7 +19,7 @@ import HttpException from "../../../exceptions/HttpException";
 
 /**
  * Analytics Event Service
- * Core service for tracking all analytics events in the Company Brain platform
+ * Core service for tracking all analytics events in the Siemens platform
  */
 class AnalyticsEventService {
   /**

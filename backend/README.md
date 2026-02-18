@@ -1,4 +1,4 @@
-# 🧠 cBrain Backend
+# 🧠 Siemens Backend
 
 AI-Powered Internal Knowledge Platform - Transform scattered company documents into an intelligent assistant that answers employee questions, trains new hires, and provides insights into organizational knowledge.
 
@@ -69,7 +69,7 @@ backend/
 Key variables to configure in `.env`:
 
 ### Application
-- `APP_NAME` - Application name (cBrain)
+- `APP_NAME` - Application name (Siemens)
 - `APP_URL` - Backend URL
 - `PORT` - Server port (default: 8000)
 
@@ -187,7 +187,7 @@ npm run test         # Run tests
 
 ### Vector Database (Pinecone)
 
-cBrain uses Pinecone for semantic search:
+Siemens uses Pinecone for semantic search:
 
 1. Documents are chunked and embedded
 2. Embeddings stored in Pinecone index

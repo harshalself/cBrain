@@ -64,7 +64,7 @@ export class UpdateAgentDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
-  @Max(2)
+  @Max(1)
   temperature?: number;
 
   @IsOptional()

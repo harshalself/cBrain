@@ -18,7 +18,6 @@ import { initializeRedisConnection } from "./utils/redis";
 import { initializePineconeConnection } from "./utils/pinecone";
 import { startTrainingWorker } from "./features/train/training.worker";
 import AnalyticsRoute from "./features/analytics/analytics.route";
-import FolderRoute from "./features/folders/folder.route";
 import NotificationRoute from "./features/notifications/notification.route";
 import InvitationRoute from "./features/invitations/invitation.route";
 import OnboardingRoute from "./features/onboarding/onboarding.route";
@@ -29,7 +28,7 @@ validateEnv();
 
 async function bootstrap() {
   try {
-    logger.info("🚀 Starting Company Brain Backend...");
+    logger.info("🚀 Starting Siemens Backend...");
 
     // Check DB connection
     await testDbConnection();
@@ -71,7 +70,6 @@ async function bootstrap() {
       new UserRoute(),
       new ChatRoute(),
       new DocumentRoute(),
-      new FolderRoute(),
       new NotificationRoute(),
       new InvitationRoute(),
       new OnboardingRoute(),
@@ -94,10 +92,10 @@ async function bootstrap() {
     const port = Number(process.env.PORT) || 8000;
     httpServer.listen(port, "0.0.0.0", () => {
       logger.info(
-        `🚀 Company Brain Backend listening on port ${port}. Environment: ${process.env.NODE_ENV || "development"}`
+        `🚀 Siemens Backend listening on port ${port}. Environment: ${process.env.NODE_ENV || "development"}`
       );
     });
-    logger.info("✅ Company Brain Backend started successfully!");
+    logger.info("✅ Siemens Backend started successfully!");
 
     // Initialize graceful shutdown handlers
     gracefulShutdown.initialize();

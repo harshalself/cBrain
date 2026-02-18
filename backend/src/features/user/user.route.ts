@@ -41,6 +41,12 @@ class UserRoute implements Route {
       this.userController.getCurrentUser
     );
 
+    this.router.post(
+      `${this.path}/logout`,
+      authMiddleware,
+      this.userController.logout
+    );
+
     this.router.get(`${this.path}`, authMiddleware, this.userController.getAllUsers);
 
     this.router.get(`${this.path}/:id`, authMiddleware, this.userController.getUserById);

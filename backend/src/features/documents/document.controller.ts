@@ -28,7 +28,7 @@ class DocumentController {
             }
 
             // Get metadata from request body
-            const { name, folder_id, tags } = req.body;
+            const { name, tags } = req.body;
 
             // Upload file to S3/storage
             const folderPath = this.documentService.getFolderPathForDocuments();
@@ -39,7 +39,6 @@ class DocumentController {
                 uploadResult,
                 {
                     name,
-                    folder_id: folder_id ? parseInt(folder_id) : undefined,
                     tags: tags ? (Array.isArray(tags) ? tags : JSON.parse(tags)) : undefined,
                 },
                 userId
@@ -71,7 +70,6 @@ class DocumentController {
                 limit: req.query.limit ? parseInt(req.query.limit as string) : undefined,
                 search: req.query.search as string,
                 file_type: req.query.file_type as any,
-                folder_id: req.query.folder_id ? parseInt(req.query.folder_id as string) : undefined,
                 status: req.query.status as any,
             };
 
@@ -174,45 +172,7 @@ class DocumentController {
         }
     };
 
-    /**
-     * Move document to a folder
-     */
-    public moveDocument = async (
-        req: RequestWithUser,
-        res: Response,
-        next: NextFunction
-    ): Promise<void> => {
-        try {
-            const id = parseInt(req.params.id);
-            const userId = req.userId || req.user?.id;
 
-            if (!userId) {
-                throw new HttpException(401, "User authentication required");
-            }
-
-            if (isNaN(id)) {
-                throw new HttpException(400, "Invalid document ID");
-            }
-
-            const { folder_id } = req.body;
-
-            // Import folder service
-            const FolderService = require("../folders/folder.service").default;
-            const folderService = new FolderService();
-
-            const updatedDocument = await folderService.moveDocumentToFolder(
-                id,
-                folder_id,
-                userId
-            );
-
-            res.status(200).json(
-                ResponseUtil.updated("Document moved successfully", updatedDocument)
-            );
-        } catch (error) {
-            next(error);
-        }
-    };
 
     /**
      * Get version history for a document

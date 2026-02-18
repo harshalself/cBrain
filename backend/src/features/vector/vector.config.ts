@@ -9,7 +9,7 @@ import { VectorConfig } from '../../interfaces/config.interface';
 
 /**
  * Default Vector Configuration
- * Production-ready settings optimized for Company Brain
+ * Production-ready settings optimized for Siemens
  */
 export const defaultVectorConfig: VectorConfig = {
   // ========================

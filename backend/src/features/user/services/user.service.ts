@@ -81,6 +81,11 @@ class UserService {
         throw new HttpException(401, "Incorrect password");
       }
 
+      // Update last login timestamp
+      await knex("users")
+        .where({ id: user.id })
+        .update({ last_login: new Date() });
+
       const accessToken = generateAccessToken(
         {
           id: user.id,
@@ -100,6 +105,7 @@ class UserService {
 
       return {
         ...user,
+        last_login: new Date().toISOString(), // Update in returned object too
         accessToken,
         refreshToken,
       };
@@ -116,6 +122,7 @@ class UserService {
     try {
       const users = await knex("users")
         .where({ is_deleted: false })
+        .whereNull("invitation_token")
         .select("*");
       return users;
     } catch (error) {

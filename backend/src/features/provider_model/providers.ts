@@ -8,25 +8,25 @@ import {
 // Create default groq provider for backward compatibility (only if API key is provided)
 const defaultGroqProvider = process.env.GROQ_API_KEY
   ? createGroq({
-      apiKey: process.env.GROQ_API_KEY,
-    })
+    apiKey: process.env.GROQ_API_KEY,
+  })
   : null;
 
 export const languageModels = defaultGroqProvider
   ? {
-      "kimi-k2": defaultGroqProvider("moonshotai/kimi-k2-instruct"),
-      "meta-llama/llama-4-scout-17b-16e-instruct": defaultGroqProvider(
-        "meta-llama/llama-4-scout-17b-16e-instruct"
-      ),
-      "llama-3.1-8b-instant": defaultGroqProvider("llama-3.1-8b-instant"),
-      "deepseek-r1-distill-llama-70b": wrapLanguageModel({
-        middleware: extractReasoningMiddleware({
-          tagName: "think",
-        }),
-        model: defaultGroqProvider("deepseek-r1-distill-llama-70b"),
+    "kimi-k2": defaultGroqProvider("moonshotai/kimi-k2-instruct"),
+    "meta-llama/llama-4-scout-17b-16e-instruct": defaultGroqProvider(
+      "meta-llama/llama-4-scout-17b-16e-instruct"
+    ),
+    "llama-3.1-8b-instant": defaultGroqProvider("llama-3.1-8b-instant"),
+    "deepseek-r1-distill-llama-70b": wrapLanguageModel({
+      middleware: extractReasoningMiddleware({
+        tagName: "think",
       }),
-      "llama-3.3-70b-versatile": defaultGroqProvider("llama-3.3-70b-versatile"),
-    }
+      model: defaultGroqProvider("deepseek-r1-distill-llama-70b"),
+    }),
+    "llama-3.3-70b-versatile": defaultGroqProvider("llama-3.3-70b-versatile"),
+  }
   : {}; // Empty object if no global API key
 
 export const model = customProvider({

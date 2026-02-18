@@ -11,7 +11,6 @@ import * as FileSources from "../src/features/source/file/file_sources.schema";
 // Removed: TextSources, WebsiteSources, DatabaseSources, DatabaseTableSchemas, QASources
 import * as Messages from "../src/features/chat/messages.schema";
 import * as Analytics from "../src/features/analytics/analytics.schema";
-import * as Folders from "../src/features/documents/folders.schema";
 import * as Documents from "../src/features/documents/documents.schema";
 import * as OnboardingTemplates from "../src/features/onboarding/onboarding_templates.schema";
 import * as OnboardingProgress from "../src/features/onboarding/onboarding_progress.schema";
@@ -48,12 +47,12 @@ export const migrateAll = async (dropFirst = false) => {
     if (dropFirst) {
       console.log("🗑️  Dropping all tables in reverse dependency order...\n");
 
-      // Level 5: Drop Company Brain dependent tables
-      console.log("Level 5: Dropping Company Brain dependent tables...");
+      // Level 5: Drop Siemens dependent tables
+      console.log("Level 5: Dropping Siemens dependent tables...");
       await dropTable(OnboardingProgress, "onboarding_progress");
       await dropTable(Notifications, "notifications");
       await dropTable(Documents, "documents");
-      console.log("✓ Company Brain dependent tables dropped");
+      console.log("✓ Siemens dependent tables dropped");
 
       await sleep(500);
 
@@ -91,9 +90,8 @@ export const migrateAll = async (dropFirst = false) => {
       // Small delay to ensure cleanup
       await sleep(1000);
 
-      // Level 1: Drop base tables and Company Brain independent tables
+      // Level 1: Drop base tables and Siemens independent tables
       console.log("Level 1: Dropping base tables and independent tables...");
-      await dropTable(Folders, "folders");
       await dropTable(OnboardingTemplates, "onboarding_templates");
       await dropTable(AIConfig, "ai_config");
       await dropTable(Users, "users");
@@ -147,14 +145,14 @@ export const migrateAll = async (dropFirst = false) => {
 
     await sleep(500);
 
-    // Level 5: Company Brain Dependent Tables
-    console.log("Level 5: Creating Company Brain dependent tables...");
+    // Level 5: Siemens Dependent Tables
+    console.log("Level 5: Creating Siemens dependent tables...");
     await Promise.all([
       createTable(Documents, "documents"),
       createTable(OnboardingProgress, "onboarding_progress"),
       createTable(Notifications, "notifications"),
     ]);
-    console.log(`✓ Company Brain dependent tables created\n`);
+    console.log(`✓ Siemens dependent tables created\n`);
 
     console.log(
       "✨ All database migrations and seeding completed successfully!"

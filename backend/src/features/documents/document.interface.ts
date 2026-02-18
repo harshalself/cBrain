@@ -2,7 +2,6 @@ export interface IDocument {
     id: number;
     name: string;
     original_name: string;
-    folder_id?: number | null;
     file_type: "pdf" | "docx" | "md" | "txt";
     file_size?: number | null;
     file_path: string;
@@ -21,7 +20,6 @@ export interface IDocument {
 export interface CreateDocumentRequest {
     name: string;
     original_name: string;
-    folder_id?: number;
     file_type: "pdf" | "docx" | "md" | "txt";
     file_size: number;
     file_path: string;
@@ -31,7 +29,6 @@ export interface CreateDocumentRequest {
 
 export interface UpdateDocumentRequest {
     name?: string;
-    folder_id?: number;
     tags?: string[];
 }
 
@@ -40,6 +37,5 @@ export interface DocumentListQuery {
     limit?: number;
     search?: string;
     file_type?: "pdf" | "docx" | "md" | "txt";
-    folder_id?: number;
     status?: "processing" | "ready" | "failed";
 }

@@ -30,7 +30,7 @@ class App {
     this.initializeErrorHandling();
 
     this.app.get("/", (req, res) => {
-      res.send("Welcome to Company Brain API");
+      res.send("Welcome to Siemens API");
     });
 
     // Health check endpoint
@@ -57,7 +57,7 @@ class App {
     const port = Number(this.port);
     this.app.listen(port, "0.0.0.0", () => {
       logger.info(
-        `🚀 Company Brain Backend listening on port ${port}. Environment: ${this.env}.`
+        `🚀 Siemens Backend listening on port ${port}. Environment: ${this.env}.`
       );
     });
   }

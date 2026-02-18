@@ -196,6 +196,25 @@ class UserController {
   };
 
   /**
+   * Logout user
+   */
+  public logout = async (
+    req: RequestWithUser,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      // In a stateless JWT implementation, we don't necessarily need to do anything on the backend,
+      // but this endpoint provides a place for token blacklisting, logging, or session cleanup.
+      res.status(200).json(
+        ResponseUtil.success("User logged out successfully")
+      );
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
    * Refresh access token using refresh token
    */
   public refresh = async (

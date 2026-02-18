@@ -1,14 +1,14 @@
 {
-  "name": "cbrain-backend",
+  "name": "siemens-backend",
   "version": "1.0.0",
-  "description": "Backend API for Company Brain - AI-Powered Internal Knowledge Platform",
+  "description": "Backend API for Siemens - AI-Powered Internal Knowledge Platform",
   "main": "build/src/server.js",
   "scripts": {
     "main": "npm run build && cross-env NODE_ENV=production node build/src/server.js",
     "start": "cross-env NODE_ENV=production node build/src/server.js",
     "dev": "cross-env NODE_ENV=development nodemon",
     "build": "tsc && npm run postbuild",
-    "postbuild": "copyfiles -u 1 \"docs/**/*\" build/docs && copyfiles -u 2 \"src/**/*.yaml\" build/src",
+    "postbuild": "echo 'Postbuild complete'",
     "test": "jest --forceExit --detectOpenHandles",
     "test:agent-features": "ts-node tests/test-agent-features-integration.ts",
     "lint": "eslint .",
@@ -16,7 +16,7 @@
     "create-admin": "ts-node scripts/create-admin.ts"
   },
   "keywords": [
-    "cbrain",
+    "siemens",
     "knowledge-management",
     "ai-assistant",
     "rag",

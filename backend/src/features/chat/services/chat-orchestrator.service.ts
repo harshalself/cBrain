@@ -99,6 +99,7 @@ class ChatOrchestratorService {
       return {
         session_id: sessionId,
         messages: messages.map((msg) => ({
+          id: msg.id,
           role: msg.role,
           content: msg.content,
           created_at: msg.created_at,

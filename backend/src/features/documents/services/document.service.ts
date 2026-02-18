@@ -11,14 +11,13 @@ import { FileUploadResult, extractInsertedId } from "../../../utils/fileupload";
 class DocumentService {
     /**
      * Upload a document to the Knowledge Base
-     * Implements versioning: if a document with the same name exists in the same folder,
+     * Implements versioning: if a document with the same name exists,
      * the version is auto-incremented per PRD FR-3.3
      */
     public async uploadDocument(
         uploadResult: FileUploadResult,
         metadata: {
             name?: string;
-            folder_id?: number;
             tags?: string[];
         },
         userId: number
@@ -42,22 +41,14 @@ class DocumentService {
             }
 
             const documentName = metadata.name || "Untitled Document";
-            const folderId = metadata.folder_id;
 
-            // Check for existing document with same name in the same folder (versioning)
+            // Check for existing document with same name (versioning)
             let existingDocument = null;
             let newVersion = 1;
             let isUpdate = false;
 
             const existingQuery = knex("documents")
                 .where({ name: documentName });
-
-            // Handle folder_id - null means root folder
-            if (folderId !== undefined && folderId !== null) {
-                existingQuery.where({ folder_id: folderId });
-            } else {
-                existingQuery.whereNull("folder_id");
-            }
 
             existingDocument = await existingQuery
                 .orderBy("version", "desc")
@@ -80,7 +71,6 @@ class DocumentService {
             const document: CreateDocumentRequest = {
                 name: documentName,
                 original_name: metadata.name || "unknown",
-                folder_id: folderId,
                 file_type,
                 file_size: uploadResult.size || 0,
                 file_path: uploadResult.Location,
@@ -173,8 +163,8 @@ class DocumentService {
                 queryBuilder = queryBuilder.where("file_type", query.file_type);
             }
 
-            if (query.folder_id !== undefined) {
-                queryBuilder = queryBuilder.where("folder_id", query.folder_id);
+            if (query.file_type) {
+                queryBuilder = queryBuilder.where("file_type", query.file_type);
             }
 
             if (query.status) {
@@ -247,7 +237,6 @@ class DocumentService {
             };
 
             if (updateData.name) updateFields.name = updateData.name;
-            if (updateData.folder_id !== undefined) updateFields.folder_id = updateData.folder_id;
             if (updateData.tags) updateFields.tags = updateData.tags;
 
             const result = await knex("documents")
@@ -271,12 +260,21 @@ class DocumentService {
      */
     public async deleteDocument(id: number, userId: number): Promise<void> {
         try {
-            // Check if document exists
-            await this.getDocumentById(id);
+            // Check if document exists and get its name
+            const document = await this.getDocumentById(id);
+            const documentName = document.name;
 
-            // Check if document is linked to any agents
+            // Get all IDs for this document (all versions)
+            const allVersions = await knex("documents")
+                .where({ name: documentName })
+                .select("id");
+
+            const allIds = allVersions.map(v => v.id);
+
+            // Check if ANY version is linked to any agents
             const linkedSources = await knex("sources")
-                .where({ document_id: id, is_deleted: false })
+                .whereIn("document_id", allIds)
+                .where({ is_deleted: false })
                 .count("* as count")
                 .first();
 
@@ -285,12 +283,12 @@ class DocumentService {
             if (linkCount > 0) {
                 throw new HttpException(
                     400,
-                    `Cannot delete document. It is currently linked to ${linkCount} agent(s). Please unlink it first.`
+                    `Cannot delete document. One or more versions are currently linked to ${linkCount} agent(s). Please unlink them first.`
                 );
             }
 
-            // Hard delete
-            await knex("documents").where({ id }).delete();
+            // Hard delete all versions
+            await knex("documents").where({ name: documentName }).delete();
         } catch (error) {
             if (error instanceof HttpException) throw error;
             throw new HttpException(
@@ -302,22 +300,15 @@ class DocumentService {
 
     /**
      * Get version history for a document
-     * Returns all versions of documents with the same name in the same folder
+     * Returns all versions of documents with the same name
      */
     public async getVersionHistory(documentId: number): Promise<IDocument[]> {
         try {
-            // Get the document to find its name and folder
+            // Get the document to find its name
             const document = await this.getDocumentById(documentId);
 
-            // Find all documents with the same name in the same folder
-            let query = knex("documents")
+            const query = knex("documents")
                 .where({ name: document.name });
-
-            if (document.folder_id !== null && document.folder_id !== undefined) {
-                query = query.where({ folder_id: document.folder_id });
-            } else {
-                query = query.whereNull("folder_id");
-            }
 
             const versions = await query
                 .orderBy("version", "desc")
