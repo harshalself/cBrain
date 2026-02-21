@@ -89,6 +89,14 @@ class AgentService {
     }
 
     /**
+     * Get all documents linked to a specific agent (for pre-selection in training UI)
+     */
+    async getAgentDocuments(id: number): Promise<any[]> {
+        const response = await api.get(`${this.basePath}/${id}/documents`);
+        return response.data.data;
+    }
+
+    /**
      * Get all available provider models from the system
      */
     async getProviderModels(): Promise<any[]> {

@@ -3,7 +3,7 @@ import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import agentService from '@/services/agentService';
 import { Agent } from '@/types/agent.types';
-import { Plus, Loader2, AlertCircle, Pencil, Trash2, Bot, Info } from 'lucide-react';
+import { Plus, Loader2, AlertCircle, Trash2, Bot, Info } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 
@@ -274,7 +274,8 @@ const AgentListPage: React.FC = () => {
                                     {agents.map((agent) => (
                                         <tr
                                             key={agent.id}
-                                            className="border-b border-border last:border-0 hover:bg-accent/50 transition-colors"
+                                            onClick={() => handleEdit(agent.id)}
+                                            className="border-b border-border last:border-0 hover:bg-accent/50 transition-colors cursor-pointer"
                                         >
                                             <td className="p-4">
                                                 <div className="flex items-center gap-3">
@@ -312,14 +313,10 @@ const AgentListPage: React.FC = () => {
                                             <td className="p-4">
                                                 <div className="flex items-center justify-end gap-2">
                                                     <button
-                                                        onClick={() => handleEdit(agent.id)}
-                                                        className="p-2 hover:bg-accent rounded-lg transition-colors"
-                                                        title="Edit agent"
-                                                    >
-                                                        <Pencil className="w-4 h-4 text-muted-foreground" />
-                                                    </button>
-                                                    <button
-                                                        onClick={() => handleDeleteClick(agent)}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            handleDeleteClick(agent);
+                                                        }}
                                                         className="p-2 hover:bg-destructive/10 rounded-lg transition-colors"
                                                         title="Delete agent"
                                                     >

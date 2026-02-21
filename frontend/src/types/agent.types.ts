@@ -55,17 +55,65 @@ export interface TrainingAnalytics {
     training_duration?: number;
 }
 
+export interface SourceBreakdown {
+    total: number;
+    completed: number;
+    embedded: number;
+    pending: number;
+    failed: number;
+}
+
+export interface TrainingMetrics {
+    embeddedSources: number;
+    recentlyProcessed: number;
+    failedSources: number;
+    vectorCount: number;
+    averageProcessingTime: number | null;
+    namespace: string;
+}
+
 export interface TrainingStatusResponse {
+    agent: {
+        id: number;
+        name: string;
+        createdAt: string;
+        lastUpdated: string;
+    };
     status: TrainingStatus;
     progress: number;
-    error?: string;
-    current_step?: string;
+    error: { message: string; timestamp: string } | null;
+    sources: {
+        total: number;
+        embedded: number;
+        pending: number;
+        breakdown: Record<string, SourceBreakdown>;
+        details: {
+            id: number;
+            name: string;
+            type: string;
+            status: string;
+            isEmbedded: boolean;
+            description: string;
+            createdAt: string;
+            lastUpdated: string;
+        }[];
+    };
+    metrics: TrainingMetrics;
+    history: {
+        recentSessions: { status: string; progress: number; timestamp: string; trainingDate: string }[];
+        sourceCompletions: { name: string; type: string; completedAt: string }[];
+    };
+    timestamps: {
+        lastTraining: string | null;
+        estimatedCompletion: string | null;
+        timeRemaining: number | null;
+    };
 }
 
 export interface TrainAgentDto {
-    source_ids?: number[];
-    chunk_size?: number;
-    chunk_overlap?: number;
+    documentIds?: number[];
+    forceRetrain?: boolean;
+    cleanupExisting?: boolean;
 }
 
 // Provider-specific model configurations
