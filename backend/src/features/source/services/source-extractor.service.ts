@@ -1,4 +1,5 @@
 import knex from "../../../../database/index.schema";
+import axios from "axios";
 import { IVectorRecord } from "../../vector/vector.interface";
 import {
   SemanticChunkerService,
@@ -7,6 +8,7 @@ import {
 } from "../../vector/services/semantic-chunker.service";
 import HttpException from "../../../exceptions/HttpException";
 import { logger } from "../../../utils/logger";
+import { extractText } from "./textExtractor";
 
 export interface ExtractedSource {
   sourceId: number;
@@ -149,18 +151,61 @@ export class SourceExtractorService {
 
   /**
    * Extract content from file source (text_content column)
+   * Optimization: If text_content is null/empty, attempt to re-extract from original file
    */
   private async extractFromFileSource(sourceId: number): Promise<string> {
     const fileSource = await knex("file_sources")
       .where({ source_id: sourceId })
-      .select("text_content")
+      .select("text_content", "file_url", "mime_type")
       .first();
 
     if (!fileSource) {
       throw new Error(`File source not found for source ID ${sourceId}`);
     }
 
+    // If we already have the text, return it
+    if (fileSource.text_content && fileSource.text_content.trim()) {
+      return fileSource.text_content;
+    }
+
+    // FALLBACK: If text is missing, re-extract from the original file (Robustness fix)
+    logger.info(`🔍 Text missing for source ${sourceId}, attempting re-extraction from ${fileSource.file_url}`);
+
+    try {
+      const extractedText = await this.downloadAndExtractText(
+        fileSource.file_url,
+        fileSource.mime_type || "application/pdf"
+      );
+
+      if (extractedText.trim()) {
+        // Save back to DB so we don't have to download again next time
+        await knex("file_sources")
+          .where({ source_id: sourceId })
+          .update({
+            text_content: extractedText,
+          });
+        logger.info(`✅ Re-extracted and saved ${extractedText.length} chars for source ${sourceId}`);
+        return extractedText;
+      }
+    } catch (error) {
+      logger.error(`❌ Failed fallback extraction for source ${sourceId}:`, error);
+    }
+
     return fileSource.text_content || "";
+  }
+
+  /**
+   * Helper to download a file and extract its text
+   */
+  private async downloadAndExtractText(url: string, mimeType: string): Promise<string> {
+    try {
+      const response = await axios.get(url, { responseType: "arraybuffer" });
+      const buffer = Buffer.from(response.data);
+      return await extractText(buffer, mimeType);
+    } catch (error) {
+      logger.error(`Failed to download or extract from ${url}:`, error);
+      return "";
+    }
   }
 
 

@@ -1,8 +1,14 @@
 {
   "compilerOptions": {
     "target": "es2017",
-    "lib": ["es2017", "esnext.asynciterable", "dom"],
-    "typeRoots": ["./node_modules/@types"],
+    "lib": [
+      "es2017",
+      "esnext.asynciterable",
+      "dom"
+    ],
+    "typeRoots": [
+      "./node_modules/@types"
+    ],
     "allowSyntheticDefaultImports": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
@@ -16,7 +22,14 @@
     "noEmit": false,
     "esModuleInterop": true
   },
-  "include": ["./src/**/*", ".env"],
-
-  "exclude": ["node_modules", "dist", "**/*.njk"]
+  "include": [
+    "./src/**/*",
+    "./tests/**/*",
+    ".env"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.njk"
+  ]
 }

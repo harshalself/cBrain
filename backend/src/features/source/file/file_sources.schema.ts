@@ -16,6 +16,7 @@ export const createTable = async () => {
     table.text("mime_type").nullable();
     table.bigInteger("file_size").defaultTo(0);
     table.text("text_content").nullable(); // Store extracted text content for vector embeddings
+    table.timestamps(true, true); // Adds created_at and updated_at
   });
 
   // Create the update_timestamp trigger with table-specific name
@@ -35,7 +36,7 @@ export const dropTable = async () => {
 // For individual table migration (when run directly)
 if (require.main === module) {
   const dropFirst = process.argv.includes("--drop");
-  
+
   (async () => {
     try {
       if (dropFirst) {
@@ -45,7 +46,7 @@ if (require.main === module) {
       console.log(`Creating ${FILE_SOURCES_TABLE} table...`);
       await createTable();
 
-      
+
       console.log(
         `${FILE_SOURCES_TABLE} table ${dropFirst ? "recreated" : "created"}`
       );

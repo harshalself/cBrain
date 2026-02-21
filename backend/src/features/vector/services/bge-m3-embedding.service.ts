@@ -36,16 +36,16 @@ class BGEM3EmbeddingService {
     if (!process.env.HUGGINGFACE_TOKEN) {
       throw new Error("HUGGINGFACE_TOKEN environment variable is required");
     }
-    
+
     this.hf = new HfInference(process.env.HUGGINGFACE_TOKEN);
     logger.info("🤖 BGE-M3 Embedding Service initialized");
   }
 
-    /**
-   * Generate embedding for a text (handles long documents with chunking)
-   * @param text - Text to embed
-   * @returns 1024-dimensional embedding vector
-   */
+  /**
+ * Generate embedding for a text (handles long documents with chunking)
+ * @param text - Text to embed
+ * @returns 1024-dimensional embedding vector
+ */
   public async embedText(text: string): Promise<number[]> {
     try {
       if (!text || text.trim().length === 0) {
@@ -62,7 +62,7 @@ class BGEM3EmbeddingService {
       }
 
       // For long texts, use chunking strategy
-      logger.debug(`� Long document detected (${cleanedText.length} chars), using chunking strategy`);
+      logger.debug(` Long document detected (${cleanedText.length} chars), using chunking strategy`);
       const chunks = this.createTextChunks(cleanedText);
       logger.debug(`� Split into ${chunks.length} chunks for processing`);
 
@@ -96,7 +96,7 @@ class BGEM3EmbeddingService {
       }
 
       logger.info(`🔄 Generating BGE-M3 embeddings for ${texts.length} texts`);
-      
+
       const results: number[][] = [];
       const batches = createBatches(texts, this.MAX_BATCH_SIZE);
 
@@ -135,11 +135,12 @@ class BGEM3EmbeddingService {
       const response = await this.hf.featureExtraction({
         model: this.MODEL_NAME,
         inputs: text,
-      });
+        provider: "hf-inference",
+      } as any);
 
       // Handle different response formats
       let embedding: number[];
-      
+
       if (Array.isArray(response)) {
         // If response is array of arrays, take first
         embedding = Array.isArray(response[0]) ? (response[0] as number[]) : (response as number[]);

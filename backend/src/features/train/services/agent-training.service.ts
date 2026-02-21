@@ -95,8 +95,7 @@ export class AgentTrainingService {
 
       throw new HttpException(
         500,
-        `Error starting training: ${
-          error instanceof Error ? error.message : "Unknown error"
+        `Error starting training: ${error instanceof Error ? error.message : "Unknown error"
         }`
       );
     }
@@ -128,17 +127,13 @@ export class AgentTrainingService {
         throw new HttpException(404, "Agent not found or access denied");
       }
 
-      // Get sources breakdown
-      const sourcesBreakdown = await this.getSourcesBreakdown(agentId);
-
-      // Get source-level details
-      const sourceDetails = await this.getSourceDetails(agentId);
-
-      // Get training metrics
-      const metrics = await this.getTrainingMetrics(agentId, userId);
-
-      // Get training history
-      const history = await this.getTrainingHistory(agentId);
+      // 2. Load all secondary data in parallel (Breaks the Waterfall)
+      const [sourcesBreakdown, sourceDetails, metrics, history] = await Promise.all([
+        this.getSourcesBreakdown(agentId),
+        this.getSourceDetails(agentId),
+        this.getTrainingMetrics(agentId, userId),
+        this.getTrainingHistory(agentId),
+      ]);
 
       // Calculate estimated completion time if training is in progress
       let estimatedCompletion = null;
@@ -171,9 +166,9 @@ export class AgentTrainingService {
         progress: agent.training_progress,
         error: agent.training_error
           ? {
-              message: agent.training_error,
-              timestamp: agent.updated_at,
-            }
+            message: agent.training_error,
+            timestamp: agent.updated_at,
+          }
           : null,
         sources: {
           total: agent.total_sources_count,
@@ -207,8 +202,7 @@ export class AgentTrainingService {
 
       throw new HttpException(
         500,
-        `Error getting training status: ${
-          error instanceof Error ? error.message : "Unknown error"
+        `Error getting training status: ${error instanceof Error ? error.message : "Unknown error"
         }`
       );
     }
@@ -290,46 +284,57 @@ export class AgentTrainingService {
    * Get training metrics and statistics with enhanced vector service integration
    */
   private async getTrainingMetrics(agentId: number, userId: number) {
-    // Get embedded sources count (this is more accurate since vectors are in Pinecone)
-    const embeddedSources = await knex("sources")
-      .where({ agent_id: agentId, is_embedded: true })
-      .count("* as total")
-      .first();
+    // 1. Prepare all database queries
+    const queries = [
+      // Get embedded sources count
+      knex("sources")
+        .where({ agent_id: agentId, is_embedded: true })
+        .count("* as total")
+        .first(),
 
-    // Get training speed metrics (sources processed per minute)
-    const recentTraining = await knex("sources")
-      .where({ agent_id: agentId, status: "completed" })
-      .where("updated_at", ">=", knex.raw("NOW() - INTERVAL '1 hour'"))
-      .count("* as recent_sources")
-      .first();
+      // Get training speed metrics (sources processed per minute)
+      knex("sources")
+        .where({ agent_id: agentId, status: "completed" })
+        .where("updated_at", ">=", knex.raw("NOW() - INTERVAL '1 hour'"))
+        .count("* as recent_sources")
+        .first(),
 
-    // Calculate average processing time per source
-    const avgProcessingTime = await knex("sources")
-      .where({ agent_id: agentId, status: "completed" })
-      .select(
-        knex.raw(
-          "AVG(EXTRACT(EPOCH FROM (updated_at - created_at))) as avg_seconds"
+      // Calculate average processing time per source
+      knex("sources")
+        .where({ agent_id: agentId, status: "completed" })
+        .select(
+          knex.raw(
+            "AVG(EXTRACT(EPOCH FROM (updated_at - created_at))) as avg_seconds"
+          )
         )
-      )
-      .first();
+        .first(),
 
-    // Get failed sources count
-    const failedSources = await knex("sources")
-      .where({ agent_id: agentId, status: "failed" })
-      .count("* as total")
-      .first();
+      // Get failed sources count
+      knex("sources")
+        .where({ agent_id: agentId, status: "failed" })
+        .count("* as total")
+        .first(),
+    ];
 
-    // Get actual vector count from Pinecone using enhanced vector service
+    // 2. Execute DB queries in parallel
+    const [embeddedSources, recentTraining, avgProcessingTime, failedSources] = await Promise.all(queries);
+
+    const embeddedCount = Number(embeddedSources?.total || 0);
+
+    // 3. Conditional external service call (Pinecone)
+    // ONLY call Pinecone if we actually have embedded sources to avoid unnecessary RTT
     let vectorCount = 0;
-    try {
-      const vectorService = new VectorService();
-      vectorCount = await vectorService.getAgentVectorCount(userId, agentId);
-    } catch (error) {
-      logger.warn(`⚠️ Could not get vector count from Pinecone:`, error);
+    if (embeddedCount > 0) {
+      try {
+        const vectorService = new VectorService();
+        vectorCount = await vectorService.getAgentVectorCount(userId, agentId);
+      } catch (error) {
+        logger.warn(`⚠️ Could not get vector count from Pinecone:`, error);
+      }
     }
 
     return {
-      embeddedSources: Number(embeddedSources?.total || 0),
+      embeddedSources: embeddedCount,
       recentlyProcessed: Number(recentTraining?.recent_sources || 0),
       failedSources: Number(failedSources?.total || 0),
       vectorCount,
@@ -484,8 +489,7 @@ export class AgentTrainingService {
 
       throw new HttpException(
         500,
-        `Error retraining agent: ${
-          error instanceof Error ? error.message : "Unknown error"
+        `Error retraining agent: ${error instanceof Error ? error.message : "Unknown error"
         }`
       );
     }

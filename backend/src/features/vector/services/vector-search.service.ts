@@ -84,27 +84,27 @@ class VectorSearchService {
           metadata:
             options?.includeMetadata !== false
               ? {
-                  category: match.metadata?.category as string,
-                  sourceId: match.metadata?.sourceId as number,
-                  sourceType: match.metadata?.sourceType as string,
-                  chunkIndex: match.metadata?.chunkIndex as number,
-                  totalChunks: match.metadata?.totalChunks as number,
-                  breakpointScore: match.metadata?.breakpointScore as number,
-                  similarity: match.metadata?.similarity as number,
-                  chunkingStrategy: match.metadata?.chunkingStrategy as string,
-                  startPosition: match.metadata?.startPosition as number,
-                  endPosition: match.metadata?.endPosition as number,
-                  // Enhanced contextual metadata (flattened)
-                  documentTitle: match.metadata?.documentTitle as string,
-                  documentSummary: match.metadata?.documentSummary as string,
-                  sectionTitle: match.metadata?.sectionTitle as string,
-                  precedingContext: match.metadata?.precedingContext as string,
-                  followingContext: match.metadata?.followingContext as string,
-                  documentFileType: match.metadata?.documentFileType as string,
-                  documentLanguage: match.metadata?.documentLanguage as string,
-                  documentWordCount: match.metadata?.documentWordCount as number,
-                  documentCreatedDate: match.metadata?.documentCreatedDate as string,
-                }
+                category: match.metadata?.category as string,
+                sourceId: match.metadata?.sourceId as number,
+                sourceType: match.metadata?.sourceType as string,
+                chunkIndex: match.metadata?.chunkIndex as number,
+                totalChunks: match.metadata?.totalChunks as number,
+                breakpointScore: match.metadata?.breakpointScore as number,
+                similarity: match.metadata?.similarity as number,
+                chunkingStrategy: match.metadata?.chunkingStrategy as string,
+                startPosition: match.metadata?.startPosition as number,
+                endPosition: match.metadata?.endPosition as number,
+                // Enhanced contextual metadata (flattened)
+                documentTitle: match.metadata?.documentTitle as string,
+                documentSummary: match.metadata?.documentSummary as string,
+                sectionTitle: match.metadata?.sectionTitle as string,
+                precedingContext: match.metadata?.precedingContext as string,
+                followingContext: match.metadata?.followingContext as string,
+                documentFileType: match.metadata?.documentFileType as string,
+                documentLanguage: match.metadata?.documentLanguage as string,
+                documentWordCount: match.metadata?.documentWordCount as number,
+                documentCreatedDate: match.metadata?.documentCreatedDate as string,
+              }
               : undefined,
         })) || [];
 
@@ -185,8 +185,6 @@ class VectorSearchService {
         this.rerankerService.selectOptimalModel(query, options?.prioritizeSpeed);
 
       // Apply reranking
-      logger.info(`🎯 Applying reranking with model: ${rerankModel}`);
-
       const rerankedResults = await this.rerankerService.rerankResults(
         query,
         initialResults,
@@ -250,7 +248,7 @@ class VectorSearchService {
   ): Promise<IVectorSearchResult[]> {
     try {
       logger.debug(`🔍🔍 DEBUG: searchSimilarWithPineconeHybrid called for query: "${query.substring(0, 50)}..."`);
-      
+
       if (!userId) {
         throw new HttpException(400, "User ID is required for vector search");
       }
@@ -314,9 +312,7 @@ class VectorSearchService {
       // Apply reranking if enabled
       if (options?.enableReranking !== false && hybridResults.length > 1) {
         const rerankModel = options?.rerankModel || "bge-reranker-v2-m3";
-        
-        logger.info(`🏆 Applying reranking with model: ${rerankModel}`);
-        
+
         const rerankedResults = await this.rerankerService.rerankResults(
           query,
           hybridResults,

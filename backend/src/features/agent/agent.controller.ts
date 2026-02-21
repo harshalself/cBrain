@@ -339,6 +339,36 @@ class AgentController {
       next(error);
     }
   };
+
+  /**
+   * Get all documents linked to an agent (for training UI pre-selection)
+   */
+  public getAgentDocuments = async (
+    req: RequestWithUser,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const agentId = parseInt(req.params.agentId);
+      const userId = req.userId || req.user?.id;
+
+      if (!userId) {
+        throw new HttpException(401, "User authentication required");
+      }
+
+      if (isNaN(agentId)) {
+        throw new HttpException(400, "Valid agent ID is required");
+      }
+
+      const documents = await this.documentLinkService.getAgentDocuments(agentId, userId);
+
+      res.status(200).json(
+        ResponseUtil.success("Agent documents retrieved successfully", documents)
+      );
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export default AgentController;

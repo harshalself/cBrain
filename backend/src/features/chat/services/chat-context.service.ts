@@ -34,12 +34,12 @@ class ChatContextService {
       const match = originalQuery.match(pattern);
       if (match && match[1]) {
         let terms = match[1].trim();
-        
+
         // For possessive patterns, also capture the possessed term
         if (match[2]) {
           terms += ` ${match[2].trim()}`;
         }
-        
+
         // Split compound terms and clean them
         const cleanedTerms = terms
           .split(/\s+(?:and|or|with|for|in|of|by|to|from)\s+/i)
@@ -96,16 +96,16 @@ class ChatContextService {
    */
   private deduplicateSearchResults(results: any[]): any[] {
     const seen = new Map<string, any>();
-    
+
     for (const result of results) {
       // Create a normalized key from the text content (first 200 chars)
       const key = result.text?.substring(0, 200).toLowerCase().trim();
-      
+
       if (key && (!seen.has(key) || result.score > seen.get(key).score)) {
         seen.set(key, result);
       }
     }
-    
+
     // Return deduplicated results sorted by score (highest first)
     return Array.from(seen.values()).sort((a, b) => b.score - a.score);
   }
@@ -128,7 +128,8 @@ class ChatContextService {
         return { contextText: "", contextSources: [] };
       }
 
-      const hasVectors = await this.vectorService.agentHasVectors(userId, agentId);
+      // Only proceed if vector store is ready
+      const hasVectors = await this.vectorService.areVectorsAvailable(userId, agentId);
       if (!hasVectors) {
         return { contextText: "", contextSources: [] };
       }
@@ -245,12 +246,12 @@ class ChatContextService {
       // Process top results to build context with document context
       const contextParts: string[] = [];
       const contextSources: any[] = [];
-      
+
       // Use top deduplicated results for better coverage
       for (const result of uniqueResults.slice(0, searchConfig.layers.chat.context.maxResultsToUse)) {
         if (result.text && result.text.length > 0) {
           contextParts.push(`${result.text}`);
-          
+
           // Extract document context information for enhanced responses
           contextSources.push({
             score: result.score,
@@ -271,9 +272,7 @@ class ChatContextService {
       // Log context usage for monitoring
       if (context) {
         logger.info(
-          `🎯 Used reranked context (${context.length} chars) with model: ${
-            process.env.COHERE_RERANK_MODEL || "cohere-rerank-3.5"
-          }`
+          `🎯 Used reranked context (${context.length} chars) with model: ${rerankModel || searchConfig.reranking.defaultModel}`
         );
       }
 
@@ -320,10 +319,10 @@ class ChatContextService {
     if (context && context.length > 0) {
       // Use configured max context length from search config (default: 3000 chars)
       const maxContextChars = searchConfig.layers.chat.context.maxContextChars;
-      const truncatedContext = context.length > maxContextChars 
+      const truncatedContext = context.length > maxContextChars
         ? context.substring(0, maxContextChars) + "..."
         : context;
-        
+
       enhancedPrompt += `\n\n**RELEVANT CONTEXT**:\n${truncatedContext}`;
     }
 

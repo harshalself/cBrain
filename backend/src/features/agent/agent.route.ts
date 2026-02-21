@@ -75,6 +75,12 @@ class AgentRoute implements Route {
       `${this.path}/:agentId/training-analytics`,
       this.agentController.getTrainingAnalytics
     );
+
+    // Get all documents linked to an agent (for training UI pre-selection)
+    this.router.get(
+      `${this.path}/:agentId/documents`,
+      this.agentController.getAgentDocuments
+    );
   }
 }
 

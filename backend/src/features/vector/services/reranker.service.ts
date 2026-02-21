@@ -16,7 +16,7 @@ import { searchConfig } from "../../../config/search.config";
  */
 class RerankerService {
   private hf: HfInference;
-  
+
   private readonly RERANK_MODELS = {
     BGE_M3: searchConfig.reranking.availableModels.bgeM3,
     BGE_RERANKER: searchConfig.reranking.availableModels.bgeReranker,
@@ -120,16 +120,17 @@ class RerankerService {
           try {
             // Create query-document pair for reranking
             const pair = `Query: ${query}\nDocument: ${result.text}`;
-            
+
             // Use feature extraction to get similarity score
             const embedding = await this.hf.featureExtraction({
               model: this.RERANK_MODELS.BGE_M3,
               inputs: pair,
-            });
+              provider: "hf-inference",
+            } as any);
 
             // Calculate a relevance score (simplified approach)
             const relevanceScore = this.calculateTextSimilarity(query, result.text);
-            
+
             return {
               ...result,
               score: relevanceScore,
@@ -304,14 +305,14 @@ class RerankerService {
     try {
       const queryTerms = query.toLowerCase().split(/\s+/);
       const textLower = text.toLowerCase();
-      
+
       // Calculate term overlap
       const matchingTerms = queryTerms.filter(term => textLower.includes(term));
       const termOverlap = matchingTerms.length / queryTerms.length;
-      
+
       // Calculate length-normalized score
       const lengthFactor = Math.min(1, text.length / (query.length * 2));
-      
+
       // Combine scores
       return termOverlap * searchConfig.reranking.termOverlapWeight + lengthFactor * searchConfig.reranking.lengthFactorWeight;
     } catch (error) {
