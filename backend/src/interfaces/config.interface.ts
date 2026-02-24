@@ -189,6 +189,7 @@ export interface ChatConfig {
     rateLimitMessage: string;
     generalRateLimitMessage: string;
     emptyResponseMessage: string;
+    requestTimeout?: number;
   };
 }
 

@@ -95,15 +95,15 @@ export const defaultSearchConfig: SearchConfig = {
     // Chat layer specific settings
     chat: {
       context: {
-        maxContextChars: 3200, // Optimized from 4000 for faster responses while maintaining quality
+        maxContextChars: 4000,
         previewMaxChars: 1200,
         textPreviewLength: 200,
-        maxResultsToUse: 10, // Increased from 5 to use more search results
+        maxResultsToUse: 15, // Capture more results
         rerankedUseTopN: 5,
       },
       vectorSearch: {
-        topK: 25, // Optimized from 30 for faster processing with maintained accuracy
-        minSimilarity: 0.18, // Slightly increased from 0.15 to reduce irrelevant results
+        topK: 25,
+        minSimilarity: 0.10, // Lower barrier to prevent dropping exact matches with low semantic similarity
         rerankTopN: 10,
         rerankThreshold: 0.35,
         enableCache: true,

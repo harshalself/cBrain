@@ -172,6 +172,51 @@ class AgentDocumentLinkService {
             );
         }
     }
+    /**
+     * Unlink a specific document from an agent (Soft delete the source)
+     */
+    public async unlinkDocumentFromAgent(
+        agentId: number,
+        documentId: number,
+        userId: number
+    ): Promise<void> {
+        try {
+            // Validate agent access
+            const agent = await knex("agents")
+                .where({ id: agentId, user_id: userId, is_deleted: false })
+                .first();
+
+            if (!agent) {
+                throw new HttpException(404, "Agent not found or access denied");
+            }
+
+            // Find the source linking this agent and document
+            const source = await knex("sources")
+                .where({ agent_id: agentId, document_id: documentId, is_deleted: false })
+                .first();
+
+            if (!source) {
+                throw new HttpException(404, "This document is not currently linked to the agent");
+            }
+
+            // Soft-delete the source link
+            await knex("sources")
+                .where({ id: source.id })
+                .update({
+                    is_deleted: true,
+                    deleted_by: userId,
+                    deleted_at: knex.fn.now(),
+                });
+
+            logger.info(`Successfully unlinked document ${documentId} from agent ${agentId}`);
+        } catch (error) {
+            if (error instanceof HttpException) throw error;
+            throw new HttpException(
+                500,
+                `Error unlinking document from agent: ${error.message}`
+            );
+        }
+    }
 }
 
 export default AgentDocumentLinkService;

@@ -55,11 +55,11 @@ class AnalyticsController {
     next: NextFunction
   ) => {
     try {
-      const startDate = req.query.startDate 
+      const startDate = req.query.startDate
         ? new Date(req.query.startDate as string)
         : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000); // Default: 7 days ago
 
-      const endDate = req.query.endDate 
+      const endDate = req.query.endDate
         ? new Date(req.query.endDate as string)
         : new Date(); // Default: now
 
@@ -94,7 +94,7 @@ class AnalyticsController {
   };
 
   /**
-   * Get user retention metrics (admin only)
+   * Get user retention metrics and platform overview (admin only)
    * GET /api/v1/analytics/retention
    */
   public getRetentionMetrics = async (
@@ -103,33 +103,43 @@ class AnalyticsController {
     next: NextFunction
   ) => {
     try {
-      const cohortDate = req.query.cohortDate 
-        ? new Date(req.query.cohortDate as string)
-        : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000); // Default: 30 days ago
+      const overview = await this.userBehaviorService.getPlatformOverviewMetrics();
 
-      const days = parseInt(req.query.days as string) || 30;
-
-      if (days < 1 || days > 365) {
-        throw new HttpException(400, "Days must be between 1 and 365");
-      }
-
-      if (cohortDate > new Date()) {
-        throw new HttpException(400, "Cohort date cannot be in the future");
-      }
-
-      const retention = await this.userBehaviorService.getUserRetentionMetrics(
-        cohortDate,
-        days
-      );
-
-      logger.info("📊 Retention metrics retrieved", {
+      logger.info("📊 Platform metrics retrieved", {
         userId: req.userId,
-        cohortDate: retention.cohortDate,
-        cohortSize: retention.cohortSize,
+        dau: overview.daily_active_users,
+        wau: overview.weekly_active_users,
       });
 
       res.status(200).json(
-        ResponseUtil.success("User retention metrics retrieved successfully", retention)
+        ResponseUtil.success("Platform metrics retrieved successfully", overview)
+      );
+    } catch (error) {
+      next(error);
+    }
+  };
+
+  /**
+   * Get popular topics from user messages
+   * GET /api/v1/analytics/popular-topics
+   */
+  public getPopularTopics = async (
+    req: RequestWithUser,
+    res: Response,
+    next: NextFunction
+  ) => {
+    try {
+      const limit = parseInt(req.query.limit as string) || 10;
+
+      const topics = await this.userBehaviorService.getPopularTopics(limit);
+
+      logger.info("🗣️ Popular topics retrieved", {
+        userId: req.userId,
+        count: topics.length,
+      });
+
+      res.status(200).json(
+        ResponseUtil.success("Popular topics retrieved successfully", topics)
       );
     } catch (error) {
       next(error);
@@ -496,7 +506,7 @@ class AnalyticsController {
     }, {} as Record<string, number>);
 
     return Object.entries(counts)
-      .sort(([,a], [,b]) => (b as number) - (a as number))[0]?.[0] || "unknown";
+      .sort(([, a], [, b]) => (b as number) - (a as number))[0]?.[0] || "unknown";
   }
 }
 

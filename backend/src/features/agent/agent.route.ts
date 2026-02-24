@@ -81,6 +81,12 @@ class AgentRoute implements Route {
       `${this.path}/:agentId/documents`,
       this.agentController.getAgentDocuments
     );
+
+    // Unlink a specific document from an agent
+    this.router.delete(
+      `${this.path}/:agentId/documents/:documentId`,
+      this.agentController.unlinkDocument
+    );
   }
 }
 

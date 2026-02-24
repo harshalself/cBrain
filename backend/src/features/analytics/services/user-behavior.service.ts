@@ -86,7 +86,7 @@ class UserBehaviorService {
       }, {} as Record<number, number>);
 
       const mostActiveHour = Object.entries(hourlyActivity)
-        .sort(([,a], [,b]) => (b as number) - (a as number))[0]?.[0] || "0";
+        .sort(([, a], [, b]) => (b as number) - (a as number))[0]?.[0] || "0";
 
       const engagement = {
         userId,
@@ -152,13 +152,13 @@ class UserBehaviorService {
 
       // Calculate period metrics
       const periodDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
-      
+
       // Create a map for quick lookup of unique days
       const uniqueDaysMap = uniqueDaysData.rows.reduce((acc: any, item: any) => {
         acc[item.user_id] = parseInt(item.unique_days);
         return acc;
       }, {} as Record<number, number>);
-      
+
       const insights = {
         period: {
           startDate,
@@ -252,7 +252,7 @@ class UserBehaviorService {
     // Consistency factor: unique active days / total period days
     const avgActivitiesPerDay = totalActivities / Math.max(uniqueDays, 1);
     const consistencyFactor = uniqueDays / Math.max(periodDays, 1);
-    
+
     const score = Math.min((avgActivitiesPerDay * consistencyFactor) * 10, 100);
     return Math.round(score * 100) / 100;
   }
@@ -284,7 +284,7 @@ class UserBehaviorService {
       for (let day = 1; day <= days; day++) {
         const checkDate = new Date(cohortStartDate);
         checkDate.setDate(checkDate.getDate() + day);
-        
+
         const nextDate = new Date(checkDate);
         nextDate.setDate(nextDate.getDate() + 1);
 
@@ -323,11 +323,116 @@ class UserBehaviorService {
       });
 
       return metrics;
-    } catch (error) {
+    } catch (error: any) {
       logger.error("❌ Failed to calculate retention metrics", {
         error: error.message,
         cohortStartDate,
       });
+      throw error;
+    }
+  }
+
+  /**
+   * Get Platform Overview Metrics (DAU, WAU, Retention)
+   */
+  public async getPlatformOverviewMetrics(): Promise<any> {
+    try {
+      const now = new Date();
+      const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+      const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+      // Calculate DAU
+      const dauResult = await DB("user_activity_events")
+        .where("created_at", ">=", oneDayAgo)
+        .countDistinct("user_id as count")
+        .first();
+      const dau = Number(dauResult?.count || 0);
+
+      // Calculate WAU
+      const wauResult = await DB("user_activity_events")
+        .where("created_at", ">=", sevenDaysAgo)
+        .countDistinct("user_id as count")
+        .first();
+      const wau = Number(wauResult?.count || 0);
+
+      // Calculate MAU
+      const mauResult = await DB("user_activity_events")
+        .where("created_at", ">=", thirtyDaysAgo)
+        .countDistinct("user_id as count")
+        .first();
+      const mau = Number(mauResult?.count || 0);
+
+      // Calculate total users
+      const totalUsersResult = await DB("users").count("id as count").first();
+      const totalUsers = Number(totalUsersResult?.count || 0);
+
+      // Simple retention and churn calculation
+      const retentionRate7d = totalUsers > 0 ? (wau / totalUsers) * 100 : 0;
+      const churnRate = totalUsers > 0 ? ((totalUsers - mau) / totalUsers) * 100 : 0;
+
+      return {
+        daily_active_users: dau,
+        weekly_active_users: wau,
+        retention_rate_7d: Math.round(retentionRate7d * 100) / 100,
+        churn_rate: Math.round(churnRate * 100) / 100,
+      };
+    } catch (error: any) {
+      logger.error("❌ Failed to get platform overview metrics", { error: error.message });
+      throw error;
+    }
+  }
+
+  /**
+   * Get Popular Topics by analyzing chat messages
+   */
+  public async getPopularTopics(limit: number = 10): Promise<any[]> {
+    try {
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+      // Fetch recent user messages
+      const messages = await DB("messages")
+        .select("content")
+        .where("role", "user")
+        .where("created_at", ">=", thirtyDaysAgo)
+        .limit(1000); // Analyze the last 1000 messages
+
+      if (messages.length === 0) return [];
+
+      const stopWords = new Set([
+        "the", "and", "is", "in", "it", "to", "of", "for", "with", "on", "a", "an",
+        "how", "what", "can", "you", "tell", "me", "about", "i", "need", "help", "my",
+        "this", "that", "are", "be", "do", "does", "did", "have", "has", "had", "was",
+        "were", "will", "would", "should", "could", "as", "at", "by", "from", "or"
+      ]);
+
+      const wordCounts: Record<string, number> = {};
+
+      for (const msg of messages) {
+        if (!msg.content) continue;
+        // Extract words (3+ chars)
+        const words = msg.content.toLowerCase().match(/\b[a-z]{3,}\b/g) || [];
+        for (const word of words) {
+          if (!stopWords.has(word)) {
+            wordCounts[word] = (wordCounts[word] || 0) + 1;
+          }
+        }
+      }
+
+      // Sort by frequency and map to Popular Question interface structure
+      const sortedTopics = Object.entries(wordCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, limit)
+        .map(([topic, count]) => ({
+          eventType: topic.charAt(0).toUpperCase() + topic.slice(1), // Capitalize format needed by frontend
+          count,
+          percentage: Math.round((count / messages.length) * 100)
+        }));
+
+      return sortedTopics;
+    } catch (error: any) {
+      logger.error("❌ Failed to extract popular topics", { error: error.message });
       throw error;
     }
   }

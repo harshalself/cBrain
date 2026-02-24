@@ -59,11 +59,11 @@ class VectorService {
       }
 
       await this.operationsService.upsertRecords(records, userId, agentId);
-      
+
       // Clear caches after upsert to ensure fresh search results
       await this.statisticsService.clearStatisticsCache(userId, agentId);
       await this.clearSearchCache();
-      
+
       logger.info(`✅ Upsert operation completed for ${records.length} records`);
     } catch (error: unknown) {
       logger.error(`❌ Error in vector upsert:`, error);
@@ -78,11 +78,11 @@ class VectorService {
   public async deleteAgentVectors(userId: number, agentId: number): Promise<void> {
     try {
       await this.operationsService.deleteAgentVectors(userId, agentId);
-      
+
       // Clear caches after deletion to ensure fresh search results
       await this.statisticsService.clearStatisticsCache(userId, agentId);
       await this.clearSearchCache();
-      
+
       logger.info(`✅ Agent vectors deletion completed for agent ${agentId}`);
     } catch (error: unknown) {
       logger.error(`❌ Error deleting agent vectors:`, error);
@@ -97,11 +97,11 @@ class VectorService {
   public async deleteUserVectors(userId: number): Promise<void> {
     try {
       await this.operationsService.deleteUserVectors(userId);
-      
+
       // Clear all caches for user after deletion
       await this.statisticsService.clearStatisticsCache(userId);
       await this.clearSearchCache();
-      
+
       logger.info(`✅ User vectors deletion completed for user ${userId}`);
     } catch (error: unknown) {
       logger.error(`❌ Error deleting user vectors:`, error);
@@ -120,7 +120,7 @@ class VectorService {
   ): Promise<IVectorSearchResult[]> {
     try {
       const fetchResponse = await this.operationsService.fetchVectors(ids, userId, agentId);
-      
+
       // Transform FetchResponse to IVectorSearchResult[]
       const results: IVectorSearchResult[] = [];
       if (fetchResponse.records) {
@@ -155,7 +155,7 @@ class VectorService {
           }
         }
       }
-      
+
       return results;
     } catch (error: unknown) {
       logger.error(`❌ Error fetching vectors:`, error);
@@ -174,10 +174,10 @@ class VectorService {
   ): Promise<void> {
     try {
       await this.operationsService.deleteVectors(ids, userId, agentId);
-      
+
       // Clear statistics cache after deletion
       await this.statisticsService.clearStatisticsCache(userId, agentId);
-      
+
       logger.info(`✅ Specific vectors deletion completed for ${ids.length} vectors`);
     } catch (error: unknown) {
       logger.error(`❌ Error deleting specific vectors:`, error);
@@ -192,10 +192,10 @@ class VectorService {
   public async deleteAllVectors(userId: number, agentId?: number): Promise<void> {
     try {
       await this.operationsService.deleteAllVectors(userId, agentId);
-      
+
       // Clear statistics cache after deletion
       await this.statisticsService.clearStatisticsCache(userId, agentId);
-      
+
       logger.info(`✅ All vectors deletion completed`);
     } catch (error: unknown) {
       logger.error(`❌ Error deleting all vectors:`, error);
@@ -329,26 +329,6 @@ class VectorService {
       logger.error(`❌ Error checking vector availability:`, error);
       return false; // Default to false on error
     }
-  }
-
-  /**
-   * Legacy method name for backward compatibility
-   * @deprecated Use areVectorsAvailable instead. This method will be removed in a future version.
-   * @deprecated Since version 1.0.0 - Use areVectorsAvailable() for better naming consistency
-   */
-  public async agentHasVectors(userId: number, agentId: number): Promise<boolean> {
-    console.warn(`⚠️ DEPRECATED: agentHasVectors() is deprecated. Use areVectorsAvailable() instead.`);
-    return this.areVectorsAvailable(userId, agentId);
-  }
-
-  /**
-   * Get vector count for a specific agent (legacy method name)
-   * @deprecated Use getVectorCount instead. This method will be removed in a future version.
-   * @deprecated Since version 1.0.0 - Use getVectorCount() for better naming consistency
-   */
-  public async getAgentVectorCount(userId: number, agentId: number): Promise<number> {
-    console.warn(`⚠️ DEPRECATED: getAgentVectorCount() is deprecated. Use getVectorCount() instead.`);
-    return this.getVectorCount(userId, agentId);
   }
 
   /**

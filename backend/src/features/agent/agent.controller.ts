@@ -369,6 +369,37 @@ class AgentController {
       next(error);
     }
   };
+
+  /**
+   * Unlink a specific document from an agent
+   */
+  public unlinkDocument = async (
+    req: RequestWithUser,
+    res: Response,
+    next: NextFunction
+  ): Promise<void> => {
+    try {
+      const agentId = parseInt(req.params.agentId);
+      const documentId = parseInt(req.params.documentId);
+      const userId = req.userId || req.user?.id;
+
+      if (!userId) {
+        throw new HttpException(401, "User authentication required");
+      }
+
+      if (isNaN(agentId) || isNaN(documentId)) {
+        throw new HttpException(400, "Valid agent ID and document ID are required");
+      }
+
+      await this.documentLinkService.unlinkDocumentFromAgent(agentId, documentId, userId);
+
+      res.status(200).json(
+        ResponseUtil.success("Document unlinked successfully")
+      );
+    } catch (error) {
+      next(error);
+    }
+  };
 }
 
 export default AgentController;

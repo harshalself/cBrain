@@ -141,8 +141,8 @@ class ChatContextService {
 
       let allSearchResults: any[] = [];
 
-      // Perform searches with all preprocessed queries
-      for (const searchQuery of searchQueries) {
+      // Perform searches with all preprocessed queries concurrently
+      const searchPromises = searchQueries.map(async (searchQuery) => {
         let searchResults;
 
         // Select search strategy
@@ -226,15 +226,16 @@ class ChatContextService {
             break;
         }
 
-        // Add results from this query, marking the source query
-        if (searchResults?.length) {
-          const resultsWithQuery = searchResults.map(result => ({
-            ...result,
-            sourceQuery: searchQuery
-          }));
-          allSearchResults.push(...resultsWithQuery);
-        }
-      }
+        // Return results from this query, marking the source query
+        return searchResults?.length ? searchResults.map(result => ({
+          ...result,
+          sourceQuery: searchQuery
+        })) : [];
+      });
+
+      // Wait for all sub-queries to complete and flatten the results
+      const resultsArrays = await Promise.all(searchPromises);
+      allSearchResults = resultsArrays.flat();
 
       // Remove duplicates based on text content and sort by score
       const uniqueResults = this.deduplicateSearchResults(allSearchResults);

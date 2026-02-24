@@ -18,7 +18,7 @@ class AiProcessingService {
    */
   private validateApiKeyFormat(provider: string, apiKey: string): void {
     const providerLower = provider?.toLowerCase();
-    
+
     if (providerLower === 'openai' && !chatConfig.aiProcessing.apiKeyPatterns.openai.test(apiKey)) {
       throw new HttpException(400, chatConfig.aiProcessing.invalidApiKeyMessages.openai);
     }
@@ -104,19 +104,36 @@ class AiProcessingService {
       const temperature = parseFloat(agent.temperature?.toString() || chatConfig.aiProcessing.defaultTemperature.toString());
       const validTemperature = isNaN(temperature) ? chatConfig.aiProcessing.defaultTemperature : Math.max(chatConfig.aiProcessing.minTemperature, Math.min(chatConfig.aiProcessing.maxTemperature, temperature));
 
-      // Note: Tools are disabled for Groq models due to compatibility issues causing empty responses
-      const result = await streamText({
-        model: modelInstance,
-        messages: dbMessages,
-        system: systemContent,
-        maxTokens: chatConfig.aiProcessing.defaultMaxTokens,
-        temperature: validTemperature,
-      });
+      // Setup timeout protection
+      const timeout = chatConfig.aiProcessing.requestTimeout || 60000;
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => {
+        controller.abort();
+        logger.warn(`🛑 AI response generation timed out after ${timeout}ms for agent ${agentId}`);
+      }, timeout);
 
-      for await (const delta of result.textStream) {
-        fullResponse += delta;
+      try {
+        // Note: Tools are disabled for Groq models due to compatibility issues causing empty responses
+        const result = await streamText({
+          model: modelInstance,
+          messages: dbMessages,
+          system: systemContent,
+          maxTokens: chatConfig.aiProcessing.defaultMaxTokens,
+          temperature: validTemperature,
+          abortSignal: controller.signal,
+        });
+
+        for await (const delta of result.textStream) {
+          fullResponse += delta;
+        }
+      } finally {
+        clearTimeout(timeoutId);
       }
     } catch (aiError: any) {
+      if (aiError.name === 'AbortError') {
+        throw new HttpException(504, "The AI response timed out. Please try a shorter question or try again later.");
+      }
+
       logger.error(`AI streaming error for agent ${agentId}:`, {
         error: aiError.message,
         provider: agent.provider,

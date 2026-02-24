@@ -168,10 +168,10 @@ class ChatProcessorService {
           ? this.chatSessionService.getOrCreateSession(agentId, userId, sessionId)
           : this.chatSessionService.getOrCreateSession(agentId, userId),
 
-        // 2. Search for relevant context
+        // 2. Search for relevant context using the agent creator's namespace
         this.getRelevantContext(
           userMessage.content,
-          userId,
+          agent.created_by, // <-- KEY FIX: Search the namespace where the documents were embedded
           agentId,
           data.sourceSelection,
           data.searchStrategy === 'simple_hybrid' ? 'pinecone_hybrid' : (data.searchStrategy || searchConfig.global.defaultStrategy as 'pinecone_hybrid' | 'semantic_only'),

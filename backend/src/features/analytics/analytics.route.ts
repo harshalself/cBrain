@@ -51,6 +51,11 @@ class AnalyticsRoute {
       this.analyticsController.getRetentionMetrics
     );
 
+    this.router.get(
+      `${this.path}/popular-topics`,
+      this.analyticsController.getPopularTopics
+    );
+
     // Phase 3: Agent Performance Analytics endpoints
     this.router.get(
       `${this.path}/agents/:agentId/performance`,

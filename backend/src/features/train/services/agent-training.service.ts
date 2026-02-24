@@ -327,7 +327,7 @@ export class AgentTrainingService {
     if (embeddedCount > 0) {
       try {
         const vectorService = new VectorService();
-        vectorCount = await vectorService.getAgentVectorCount(userId, agentId);
+        vectorCount = await vectorService.getVectorCount(userId, agentId);
       } catch (error) {
         logger.warn(`⚠️ Could not get vector count from Pinecone:`, error);
       }
@@ -438,7 +438,7 @@ export class AgentTrainingService {
       const vectorService = new VectorService();
 
       // Check if agent has vectors before attempting cleanup
-      const hasVectors = await vectorService.agentHasVectors(userId, agentId);
+      const hasVectors = await vectorService.areVectorsAvailable(userId, agentId);
 
       if (hasVectors) {
         await vectorService.deleteAgentVectors(userId, agentId);
