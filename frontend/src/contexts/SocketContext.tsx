@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef, ReactNode } from 'react';
 import { io, Socket } from 'socket.io-client';
 
 /**
@@ -33,6 +33,7 @@ const SOCKET_URL = import.meta.env.VITE_WS_URL || import.meta.env.VITE_API_URL?.
 export function SocketProvider({ children }: SocketProviderProps) {
     const [socket, setSocket] = useState<Socket | null>(null);
     const [isConnected, setIsConnected] = useState(false);
+    const socketRef = useRef<Socket | null>(null);
 
     const connect = useCallback(() => {
         const token = localStorage.getItem('token');
@@ -42,7 +43,7 @@ export function SocketProvider({ children }: SocketProviderProps) {
         }
 
         // Don't create duplicate connections
-        if (socket?.connected) {
+        if (socketRef.current?.connected) {
             return;
         }
 
@@ -70,30 +71,33 @@ export function SocketProvider({ children }: SocketProviderProps) {
             setIsConnected(false);
         });
 
+        socketRef.current = socketInstance;
         setSocket(socketInstance);
-    }, [socket]);
+    }, []);
 
     const disconnect = useCallback(() => {
-        if (socket) {
-            socket.disconnect();
+        if (socketRef.current) {
+            socketRef.current.disconnect();
+            socketRef.current = null;
             setSocket(null);
             setIsConnected(false);
         }
-    }, [socket]);
+    }, []);
 
     // Auto-connect when token exists
     useEffect(() => {
         const token = localStorage.getItem('token');
-        if (token && !socket) {
+        if (token && !socketRef.current) {
             connect();
         }
 
         return () => {
-            if (socket) {
-                socket.disconnect();
+            if (socketRef.current) {
+                socketRef.current.disconnect();
+                socketRef.current = null;
             }
         };
-    }, []);
+    }, [connect]);
 
     return (
         <SocketContext.Provider value={{ socket, isConnected, connect, disconnect }}>

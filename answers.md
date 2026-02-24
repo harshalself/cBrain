@@ -9,7 +9,7 @@ MVP Scope: For the MVP, which of these features are absolutely critical?
 ❓ Onboarding coach (is this Phase 1 or later?)
 ❓ Analytics dashboard (basic or advanced?)
 ❓ External integrations (Notion, GitHub, etc. - MVP or later?)
-Differentiation: What makes Company Brain different from existing tools like Notion AI, Confluence AI, or Slite? What's your unique selling point?
+Differentiation: What makes Siemens different from existing tools like Notion AI, Confluence AI, or Slite? What's your unique selling point?
 👥 User Roles & Permissions
 Employee Role: What exactly can employees do?
 Ask questions ✓

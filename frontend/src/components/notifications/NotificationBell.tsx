@@ -26,11 +26,9 @@ export default function NotificationBell() {
         }
     };
 
-    // Poll for new notifications every 30 seconds (fallback)
+    // Initial fetch for notifications
     useEffect(() => {
         fetchUnreadCount();
-        const interval = setInterval(fetchUnreadCount, 30000);
-        return () => clearInterval(interval);
     }, []);
 
     // Listen for real-time notifications

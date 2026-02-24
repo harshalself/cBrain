@@ -164,12 +164,11 @@ const AskBrain: React.FC = () => {
         }
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!question.trim() || !activeSession || !agentId) return;
+    const handleSendMessage = async (directQuestion?: string) => {
+        const userMessageContent = (directQuestion || question).trim();
+        if (!userMessageContent || !activeSession || !agentId) return;
 
-        const userMessageContent = question.trim();
-        setQuestion('');
+        if (!directQuestion) setQuestion('');
         setIsSending(true);
 
         // Optimistically add user message to UI
@@ -197,8 +196,7 @@ const AskBrain: React.FC = () => {
                 ],
                 sessionId: activeSession.id.toString(),
                 sourceSelection: 'auto',
-                searchStrategy: 'simple_hybrid',
-                enableReranking: true
+                searchStrategy: 'simple_hybrid'
             });
 
             // Add AI response to messages
@@ -217,20 +215,30 @@ const AskBrain: React.FC = () => {
             }
 
             // Reload session list to update last_message_at
-            // We don't want to show full loading state here
             const data = await chatService.getSessions(agentId);
             setSessions(data);
 
         } catch (err: any) {
-            const errorMsg = err.response?.data?.message || 'Failed to send message';
+            let errorMsg = err.response?.data?.message || 'Failed to send message';
+
+            // Special handling for timeouts
+            if (err.code === 'ECONNABORTED' || err.response?.status === 504) {
+                errorMsg = 'The request timed out. The AI is taking longer than expected to respond. Please try again.';
+            }
+
             toast.error(errorMsg);
 
             // Remove optimistic user message on error
             setMessages(prev => prev.filter(m => m.id !== tempUserMessage.id));
-            setQuestion(userMessageContent); // Restore question
+            if (!directQuestion) setQuestion(userMessageContent); // Restore question only if it came from input
         } finally {
             setIsSending(false);
         }
+    };
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        await handleSendMessage();
     };
 
     const handleCopyMessage = async (content: string, messageId: number) => {
@@ -245,10 +253,12 @@ const AskBrain: React.FC = () => {
     };
 
     const suggestedQuestions = [
-        "How do I apply for leave?",
-        "What is the deployment process?",
-        "Where is the API documentation?",
-        "What are company benefits?",
+        "What is our Git branching strategy?",
+        "How many PTO days do employees get?",
+        "What is the policy for working late meals?",
+        "How do I request an ergonomic assessment?",
+        "What is our core tech stack?",
+        "When are the production deployment windows?",
     ];
 
     // Loading state
@@ -360,7 +370,7 @@ const AskBrain: React.FC = () => {
                                             {suggestedQuestions.map((q, idx) => (
                                                 <button
                                                     key={idx}
-                                                    onClick={() => setQuestion(q)}
+                                                    onClick={() => handleSendMessage(q)}
                                                     className="px-4 py-2 rounded-full bg-secondary/30 hover:bg-secondary/50 text-sm text-foreground transition-colors"
                                                 >
                                                     {q}

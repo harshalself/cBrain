@@ -1,10 +1,10 @@
-# 🧠 Company Brain – AI-Powered Internal Knowledge & Productivity Platform
+# 🧠 Siemens – AI-Powered Internal Knowledge & Productivity Platform
 
 ## 1. Introduction
 
-Company Brain is an AI-powered internal knowledge and productivity platform designed for startups and growing companies. It transforms scattered company documents, policies, and technical information into a single intelligent system that answers employee questions, trains new hires, and gives management deep insights into organizational knowledge health.
+Siemens is an AI-powered internal knowledge and productivity platform designed for startups and growing companies. It transforms scattered company documents, policies, and technical information into a single intelligent system that answers employee questions, trains new hires, and gives management deep insights into organizational knowledge health.
 
-Instead of employees searching through PDFs, Notion pages, Slack messages, and Google Docs, they simply ask Company Brain and get instant, accurate, and contextual answers.
+Instead of employees searching through PDFs, Notion pages, Slack messages, and Google Docs, they simply ask Siemens and get instant, accurate, and contextual answers.
 
 ---
 
@@ -27,9 +27,9 @@ This leads to:
 
 ---
 
-## 3. The Solution – Company Brain
+## 3. The Solution – Siemens
 
-Company Brain acts as a living, self-learning knowledge system for the organization.
+Siemens acts as a living, self-learning knowledge system for the organization.
 
 It:
 
@@ -103,7 +103,7 @@ The AI responds using company-approved documents only and provides the exact sou
 
 ### 5.3 AI Onboarding Coach
 
-When a new employee joins, Company Brain creates a personalized learning journey:
+When a new employee joins, Siemens creates a personalized learning journey:
 
 * Day-wise onboarding plan
 * Micro-learning lessons
@@ -232,7 +232,7 @@ Admins and managers can view:
 
 ---
 
-## 10. Why Company Brain is Different
+## 10. Why Siemens is Different
 
 * Not just a chatbot — it is an intelligence system
 * Self-updating knowledge base
@@ -244,12 +244,12 @@ Admins and managers can view:
 
 ## 11. One-Line Summary
 
-Company Brain is an AI-powered internal intelligence platform that transforms company knowledge into a self-learning system that trains employees, automates internal support, and provides deep insights into organizational learning gaps.
+Siemens is an AI-powered internal intelligence platform that transforms company knowledge into a self-learning system that trains employees, automates internal support, and provides deep insights into organizational learning gaps.
 
 ---
 
 ## 12. Conclusion
 
-Company Brain is designed to become a core operating system for modern organizations. By combining AI, automation, and analytics, it helps companies scale faster, onboard better, and operate smarter.
+Siemens is designed to become a core operating system for modern organizations. By combining AI, automation, and analytics, it helps companies scale faster, onboard better, and operate smarter.
 
 It is not just a tool — it is the brain of the company.

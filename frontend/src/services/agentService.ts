@@ -97,6 +97,13 @@ class AgentService {
     }
 
     /**
+     * Unlink a specific document from an agent
+     */
+    async unlinkAgentDocument(agentId: number, documentId: number): Promise<void> {
+        await api.delete(`${this.basePath}/${agentId}/documents/${documentId}`);
+    }
+
+    /**
      * Get all available provider models from the system
      */
     async getProviderModels(): Promise<any[]> {

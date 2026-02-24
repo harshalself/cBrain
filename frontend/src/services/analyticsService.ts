@@ -22,10 +22,20 @@ export interface UserActivity {
 }
 
 export interface BehaviorInsights {
-    peak_hours: { hour: number; activity_count: number }[];
-    popular_topics: { topic: string; count: number; category?: string }[];
-    user_segments: { segment: string; user_count: number; avg_engagement: number }[];
-    common_queries: { query: string; frequency: number }[];
+    period: { startDate: string, endDate: string, days: number };
+    userBehavior: {
+        userId: number;
+        totalActivities: number;
+        uniqueActiveDays: number;
+        avgDailyActivity: number;
+        engagementScore: number;
+    }[];
+    eventTypeDistribution: {
+        eventType: string;
+        count: number;
+        percentage: number;
+    }[];
+    summary: { totalUsers: number, totalActivities: number, avgActivitiesPerUser: number };
 }
 
 export interface RetentionMetrics {
@@ -50,19 +60,23 @@ export interface AgentPerformance {
 }
 
 export interface TopAgent {
-    agent_id: number;
-    agent_name: string;
-    score: number;
-    total_conversations: number;
-    satisfaction_rate: number;
+    agentId: number;
+    agentName: string;
+    model?: string;
+    provider?: string;
+    totalChats: number;
+    totalCost: number;
+    avgResponseTime: number;
+    avgSatisfaction: number;
 }
 
 export interface ModelUsage {
-    model_name: string;
-    total_requests: number;
-    total_tokens: number;
-    avg_latency_ms: number;
-    success_rate: number;
+    model: string;
+    provider?: string;
+    usageCount: number;
+    totalCost: number;
+    avgResponseTime: number;
+    avgSatisfaction: number;
 }
 
 export interface ModelCost {
@@ -158,7 +172,7 @@ class AnalyticsService {
      */
     async getModelUsage(): Promise<ModelUsage[]> {
         const response = await api.get(`${this.basePath}/models/usage`);
-        return response.data.data;
+        return response.data.data.modelStats || [];
     }
 
     /**
@@ -194,30 +208,45 @@ class AnalyticsService {
 
     /**
      * Helper: Transform behavior insights to PopularQuestion format
+     * Note: common_queries is no longer returned, using eventTypeDistribution instead
      */
     transformToPopularQuestions(insights: BehaviorInsights): PopularQuestion[] {
-        if (!insights || !insights.common_queries) {
-            return [];
-        }
-        return insights.common_queries.map(q => ({
-            question: q.query,
-            count: q.frequency,
-            category: 'General', // Default category
-        }));
+        return this.transformTopicsToQuestions(insights);
     }
 
     /**
      * Helper: Transform popular topics to PopularQuestion format
      */
     transformTopicsToQuestions(insights: BehaviorInsights): PopularQuestion[] {
-        if (!insights || !insights.popular_topics) {
+        if (!insights || !insights.eventTypeDistribution) {
             return [];
         }
-        return insights.popular_topics.map(t => ({
-            question: t.topic,
+        return insights.eventTypeDistribution.map(t => ({
+            question: t.eventType, // Using eventType as the "topic/question"
             count: t.count,
-            category: t.category || 'General',
+            category: 'Event Action',
         }));
+    }
+
+    /**
+     * Get popular conversational topics (admin)
+     */
+    async getPopularTopics(limit: number = 10): Promise<PopularQuestion[]> {
+        try {
+            const response = await api.get(`${this.basePath}/popular-topics`, {
+                params: { limit },
+            });
+            // The backend returns an array of { eventType: string, count: number, percentage: number }
+            // Let's map it back to the PopularQuestion format
+            return (response.data.data || []).map((t: any) => ({
+                question: t.eventType,
+                count: t.count,
+                category: 'User Question'
+            }));
+        } catch (error) {
+            console.error("Failed to fetch popular topics:", error);
+            return [];
+        }
     }
 }
 

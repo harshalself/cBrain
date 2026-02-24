@@ -1,4 +1,4 @@
-# 🚀 Implementation Plan - Company Brain
+# 🚀 Implementation Plan - Siemens
 **Phase-Wise Development Roadmap**
 
 **Project Type:** College Project  
@@ -147,7 +147,7 @@ Frontend:
   # Vector Database
   PINECONE_API_KEY=your_pinecone_key
   PINECONE_ENVIRONMENT=your_env
-  PINECONE_INDEX=company-brain
+  PINECONE_INDEX=Siemens
   
   # AI Services
   GROQ_API_KEY=your_groq_key
@@ -327,7 +327,7 @@ CREATE INDEX idx_messages_rating ON messages(rating);
 - [ ] **Initialize Pinecone index**
   ```bash
   # In Pinecone dashboard:
-  # - Create index: company-brain
+  # - Create index: Siemens
   # - Dimensions: 384 (for all-MiniLM-L6-v2)
   # - Metric: cosine
   ```
@@ -359,7 +359,7 @@ CREATE INDEX idx_messages_rating ON messages(rating);
     
     // Test Pinecone
     const pinecone = new Pinecone({ apiKey: process.env.PINECONE_API_KEY });
-    const index = pinecone.index('company-brain');
+    const index = pinecone.index('Siemens');
     console.log('Pinecone:', '✅');
     
     // Test Redis

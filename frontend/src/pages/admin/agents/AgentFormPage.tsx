@@ -268,6 +268,23 @@ const AgentFormPage: React.FC = () => {
         }
     };
 
+    const handleUnlinkDocument = async (docId: number) => {
+        if (!id) return;
+        try {
+            await agentService.unlinkAgentDocument(parseInt(id), docId);
+
+            // Remove from linked docs
+            setLinkedDocIds(prev => prev.filter(d => d !== docId));
+
+            // Uncheck safely if checked
+            setSelectedDocIds(prev => prev.filter(d => d !== docId));
+
+            toast.success('Document unlinked successfully');
+        } catch (err: any) {
+            toast.error(err.response?.data?.message || 'Failed to unlink document');
+        }
+    };
+
     const isActivelyTraining = trainingStatus?.status === 'pending' || trainingStatus?.status === 'in-progress';
 
     // ── Loading state ─────────────────────────────────────────────────────────
@@ -379,6 +396,7 @@ const AgentFormPage: React.FC = () => {
                             onSelectAll={() => setSelectedDocIds(documents.map(d => d.id))}
                             onDeselectAll={() => setSelectedDocIds([])}
                             onTrain={handleTrain}
+                            onUnlinkDoc={handleUnlinkDocument}
                         />
                     </div>
                 )}

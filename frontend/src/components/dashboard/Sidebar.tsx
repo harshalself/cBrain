@@ -28,7 +28,7 @@ const navItems: NavItem[] = [
     { name: 'Users', path: '/admin/users', icon: Users, roles: ['admin'] },
     { name: 'Agents', path: '/admin/agents', icon: Bot, roles: ['admin'] },
     // { name: 'Onboarding', path: '/admin/onboarding', icon: GraduationCap, roles: ['admin'] },
-    // { name: 'Analytics', path: '/admin/analytics', icon: BarChart3, roles: ['admin'] },
+    { name: 'Analytics', path: '/admin/analytics', icon: BarChart3, roles: ['admin'] },
     { name: 'Messages', path: '/admin/messages', icon: MessageSquare, roles: ['admin'] },
     { name: 'My Profile', path: '/admin/profile', icon: UserIcon, roles: ['admin'] },
     // Employee routes

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Database, FileText, Loader2, PlayCircle, CheckSquare, Square } from 'lucide-react';
+import { Database, FileText, Loader2, PlayCircle, CheckSquare, Square, Unlink } from 'lucide-react';
 import { Document } from '@/services/documentService';
 import documentService from '@/services/documentService';
 import FileIcon from './FileIcon';
@@ -15,12 +15,13 @@ interface DocumentPickerProps {
     onSelectAll: () => void;
     onDeselectAll: () => void;
     onTrain: () => void;
+    onUnlinkDoc: (docId: number) => void;
 }
 
 const DocumentPicker: React.FC<DocumentPickerProps> = ({
     documents, selectedDocIds, linkedDocumentIds,
     isLoadingDocs, isTraining, isActivelyTraining,
-    onToggleDoc, onSelectAll, onDeselectAll, onTrain,
+    onToggleDoc, onSelectAll, onDeselectAll, onTrain, onUnlinkDoc,
 }) => (
     <div className="glass rounded-3xl p-6 border border-border/50 shadow-xl">
         {/* Header */}
@@ -63,40 +64,56 @@ const DocumentPicker: React.FC<DocumentPickerProps> = ({
                     const isSelected = selectedDocIds.includes(doc.id);
                     const isLinked = linkedDocumentIds.includes(doc.id);
                     return (
-                        <button
+                        <div
                             key={doc.id}
-                            type="button"
-                            onClick={() => onToggleDoc(doc.id)}
-                            className={`w-full flex items-center gap-3 p-3.5 rounded-xl border transition-all text-left group ${isSelected
+                            className={`w-full flex items-center justify-between gap-3 p-3.5 rounded-xl border transition-all text-left group ${isSelected
                                 ? 'bg-primary/5 border-primary/30 ring-1 ring-primary/20'
                                 : 'bg-secondary/10 border-border/50 hover:bg-secondary/20 hover:border-border'
                                 }`}
                         >
-                            <div className="flex-shrink-0">
-                                {isSelected
-                                    ? <CheckSquare className="w-5 h-5 text-primary" />
-                                    : <Square className="w-5 h-5 text-muted-foreground/40" />
-                                }
-                            </div>
-                            <div className="flex-shrink-0">
-                                <FileIcon fileType={doc.file_type} className="w-4 h-4" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={() => onToggleDoc(doc.id)}
+                                className="flex flex-1 items-center gap-3 min-w-0"
+                            >
+                                <div className="flex-shrink-0">
+                                    {isSelected
+                                        ? <CheckSquare className="w-5 h-5 text-primary" />
+                                        : <Square className="w-5 h-5 text-muted-foreground/40" />
+                                    }
+                                </div>
+                                <div className="flex-shrink-0">
+                                    <FileIcon fileType={doc.file_type} className="w-4 h-4" />
+                                </div>
+                                <div className="flex-1 min-w-0">
                                     <p className="text-sm font-semibold text-foreground truncate">
                                         {doc.name || doc.original_name}
                                     </p>
-                                    {isLinked && (
-                                        <span className="text-[10px] px-1.5 py-0.5 bg-green-500/10 text-green-500 border border-green-500/20 rounded-full font-bold flex-shrink-0">
-                                            Linked
-                                        </span>
-                                    )}
+                                    <p className="text-xs text-muted-foreground mt-0.5">
+                                        {doc.file_type.toUpperCase()} · {documentService.formatFileSize(doc.file_size)}
+                                    </p>
                                 </div>
-                                <p className="text-xs text-muted-foreground mt-0.5">
-                                    {doc.file_type.toUpperCase()} · {documentService.formatFileSize(doc.file_size)}
-                                </p>
-                            </div>
-                        </button>
+                            </button>
+                            {isLinked && (
+                                <div className="flex items-center gap-2 flex-shrink-0">
+                                    <span className="text-[10px] px-1.5 py-0.5 bg-green-500/10 text-green-500 border border-green-500/20 rounded-full font-bold">
+                                        Linked
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            onUnlinkDoc(doc.id);
+                                        }}
+                                        disabled={isTraining || isActivelyTraining}
+                                        className="h-7 w-7 flex items-center justify-center rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground transition-colors disabled:opacity-50"
+                                        title="Unlink document"
+                                    >
+                                        <Unlink className="w-3.5 h-3.5" />
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     );
                 })}
             </div>

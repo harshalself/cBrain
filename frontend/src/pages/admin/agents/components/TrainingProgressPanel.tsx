@@ -91,8 +91,8 @@ const TrainingProgressPanel: React.FC<TrainingProgressPanelProps> = ({
                 </div>
             )}
 
-            {/* Retrain */}
-            {status === 'completed' && (
+            {/* Retrain - Hidden for now as per user request */}
+            {/* {status === 'completed' && (
                 <button
                     onClick={onRetrain}
                     disabled={isTraining}
@@ -101,7 +101,7 @@ const TrainingProgressPanel: React.FC<TrainingProgressPanelProps> = ({
                     {isTraining ? <Loader2 className="w-4 h-4 animate-spin" /> : <RotateCcw className="w-4 h-4" />}
                     Retrain Agent
                 </button>
-            )}
+            )} */}
         </div>
     );
 };

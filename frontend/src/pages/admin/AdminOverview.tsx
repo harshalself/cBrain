@@ -2,23 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { StatCard } from '@/components/dashboard/StatCard';
 import { useAuth } from '@/contexts/AuthContext';
-import { formatRelativeTime } from '@/lib/utils';
-import { Stat, Activity } from '@/types';
+import { Stat } from '@/types';
 import { Upload, MessageSquare, UserPlus, FileEdit, Loader2, RefreshCw, Users, FileText, Bot, Clock } from 'lucide-react';
 import { userService } from '@/services/userService';
 import { documentService } from '@/services/documentService';
-import { notificationService, Notification } from '@/services/notificationService';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/hooks/use-toast';
 import { Link } from 'react-router-dom';
-
-const activityIcons: Record<string, React.ElementType> = {
-    document_upload: Upload,
-    document_update: FileEdit,
-    user_joined: UserPlus,
-    chat_message: MessageSquare,
-    default: MessageSquare,
-};
 
 const AdminOverview: React.FC = () => {
     const { user: authUser } = useAuth();
@@ -36,7 +26,6 @@ const AdminOverview: React.FC = () => {
     // State
     const [isLoading, setIsLoading] = useState(true);
     const [stats, setStats] = useState<Stat[]>([]);
-    const [activities, setActivities] = useState<Activity[]>([]);
     const [documentStats, setDocumentStats] = useState({ total: 0, ready: 0, processing: 0, failed: 0 });
 
     // Load data on mount
@@ -48,11 +37,10 @@ const AdminOverview: React.FC = () => {
         try {
             setIsLoading(true);
 
-            // Load users, documents, and notifications in parallel
-            const [users, documents, notifications] = await Promise.allSettled([
+            // Load users and documents in parallel
+            const [users, documents] = await Promise.allSettled([
                 userService.getAllUsers(),
                 documentService.getDocuments({ limit: 1000 }),
-                notificationService.getNotifications({ limit: 10 }),
             ]);
 
             // Calculate stats from real data
@@ -108,16 +96,8 @@ const AdminOverview: React.FC = () => {
             ];
             setStats(calculatedStats);
 
-            // Transform notifications to activities
-            const notifData = notifications.status === 'fulfilled' ? notifications.value.notifications : [];
-            const activityList: Activity[] = notifData.slice(0, 5).map((n: Notification) => ({
-                id: `act-${n.id}`,
-                type: (n.type.includes('upload') ? 'upload' : n.type.includes('user') ? 'user_joined' : 'question') as Activity['type'],
-                message: n.message,
-                timestamp: n.created_at,
-                user: 'System',
-            }));
-            setActivities(activityList);
+            // Documents are handled above
+
 
         } catch (error: any) {
             console.error('Failed to load dashboard data:', error);
@@ -169,34 +149,33 @@ const AdminOverview: React.FC = () => {
 
                 {/* Main Content Grid */}
                 <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-                    {/* Recent Activity */}
+                    {/* Quick Actions */}
                     <div className="xl:col-span-2 glass rounded-2xl p-6">
-                        <h2 className="text-xl font-bold text-foreground mb-6">Recent Activity</h2>
-                        <div className="space-y-4">
-                            {activities.length > 0 ? (
-                                activities.map((activity) => {
-                                    const Icon = activityIcons[activity.type] || activityIcons.default;
-                                    return (
-                                        <div key={activity.id} className="flex items-start gap-4 p-4 rounded-xl hover:bg-secondary/20 transition-colors">
-                                            <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                                                <Icon className="w-5 h-5 text-primary" />
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm text-foreground">
-                                                    {activity.message}
-                                                </p>
-                                                <p className="text-xs text-muted-foreground mt-1">
-                                                    {formatRelativeTime(activity.timestamp)}
-                                                </p>
-                                            </div>
-                                        </div>
-                                    );
-                                })
-                            ) : (
-                                <p className="text-sm text-muted-foreground text-center py-8">
-                                    No recent activity
-                                </p>
-                            )}
+                        <h2 className="text-xl font-bold text-foreground mb-6">Quick Actions</h2>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <Link to="/admin/knowledge-base" className="p-4 rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-all text-left group">
+                                <Upload className="w-6 h-6 text-primary mb-2 group-hover:scale-110 transition-transform" />
+                                <h3 className="text-sm font-semibold text-foreground">Upload Document</h3>
+                                <p className="text-xs text-muted-foreground mt-1">Add new knowledge</p>
+                            </Link>
+
+                            <Link to="/admin/user-management" className="p-4 rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-all text-left group">
+                                <UserPlus className="w-6 h-6 text-primary mb-2 group-hover:scale-110 transition-transform" />
+                                <h3 className="text-sm font-semibold text-foreground">Add User</h3>
+                                <p className="text-xs text-muted-foreground mt-1">Invite team member</p>
+                            </Link>
+
+                            <Link to="/admin/analytics" className="p-4 rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-all text-left group">
+                                <MessageSquare className="w-6 h-6 text-primary mb-2 group-hover:scale-110 transition-transform" />
+                                <h3 className="text-sm font-semibold text-foreground">View Analytics</h3>
+                                <p className="text-xs text-muted-foreground mt-1">Usage insights</p>
+                            </Link>
+
+                            <Link to="/admin/agents" className="p-4 rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-all text-left group">
+                                <Bot className="w-6 h-6 text-primary mb-2 group-hover:scale-110 transition-transform" />
+                                <h3 className="text-sm font-semibold text-foreground">Manage Agents</h3>
+                                <p className="text-xs text-muted-foreground mt-1">Configure AI agents</p>
+                            </Link>
                         </div>
                     </div>
 
@@ -228,36 +207,6 @@ const AdminOverview: React.FC = () => {
                                 <p className="text-xs text-muted-foreground">Need attention</p>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                {/* Quick Actions */}
-                <div className="glass rounded-2xl p-6">
-                    <h2 className="text-xl font-bold text-foreground mb-6">Quick Actions</h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <Link to="/admin/knowledge-base" className="p-4 rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-all text-left group">
-                            <Upload className="w-6 h-6 text-primary mb-2 group-hover:scale-110 transition-transform" />
-                            <h3 className="text-sm font-semibold text-foreground">Upload Document</h3>
-                            <p className="text-xs text-muted-foreground mt-1">Add new knowledge</p>
-                        </Link>
-
-                        <Link to="/admin/user-management" className="p-4 rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-all text-left group">
-                            <UserPlus className="w-6 h-6 text-primary mb-2 group-hover:scale-110 transition-transform" />
-                            <h3 className="text-sm font-semibold text-foreground">Add User</h3>
-                            <p className="text-xs text-muted-foreground mt-1">Invite team member</p>
-                        </Link>
-
-                        <Link to="/admin/analytics" className="p-4 rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-all text-left group">
-                            <MessageSquare className="w-6 h-6 text-primary mb-2 group-hover:scale-110 transition-transform" />
-                            <h3 className="text-sm font-semibold text-foreground">View Analytics</h3>
-                            <p className="text-xs text-muted-foreground mt-1">Usage insights</p>
-                        </Link>
-
-                        <Link to="/admin/agents" className="p-4 rounded-xl border-2 border-dashed border-border hover:border-primary hover:bg-primary/5 transition-all text-left group">
-                            <Bot className="w-6 h-6 text-primary mb-2 group-hover:scale-110 transition-transform" />
-                            <h3 className="text-sm font-semibold text-foreground">Manage Agents</h3>
-                            <p className="text-xs text-muted-foreground mt-1">Configure AI agents</p>
-                        </Link>
                     </div>
                 </div>
             </div>

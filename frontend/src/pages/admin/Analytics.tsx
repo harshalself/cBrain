@@ -55,19 +55,22 @@ const Analytics: React.FC = () => {
             setIsLoading(true);
 
             // Load all analytics data in parallel
-            const [insights, retention, agents, models] = await Promise.allSettled([
+            const [insights, retention, agents, models, topics] = await Promise.allSettled([
                 analyticsService.getBehaviorInsights(),
                 analyticsService.getRetentionMetrics(),
                 analyticsService.getTopAgents(5),
                 analyticsService.getModelUsage(),
+                analyticsService.getPopularTopics(10),
             ]);
 
             // Handle behavior insights
             if (insights.status === 'fulfilled') {
                 setBehaviorInsights(insights.value);
-                // Transform to popular topics for display
-                const topics = analyticsService.transformTopicsToQuestions(insights.value);
-                setPopularTopics(topics);
+            }
+
+            // Handle popular topics
+            if (topics.status === 'fulfilled') {
+                setPopularTopics(topics.value);
             }
 
             // Handle retention metrics
@@ -120,25 +123,25 @@ const Analytics: React.FC = () => {
 
     const topAgentsColumns = [
         {
-            key: 'agent_name',
+            key: 'agentName',
             label: 'Agent',
             render: (item: TopAgent) => (
                 <div className="flex items-center gap-2">
                     <Bot className="h-4 w-4 text-muted-foreground" />
-                    <span className="font-medium">{item.agent_name}</span>
+                    <span className="font-medium">{item.agentName}</span>
                 </div>
             ),
         },
         {
-            key: 'total_conversations',
+            key: 'totalChats',
             label: 'Conversations',
         },
         {
-            key: 'satisfaction_rate',
+            key: 'avgSatisfaction',
             label: 'Satisfaction',
             render: (item: TopAgent) => (
-                <span className={`font-semibold ${item.satisfaction_rate >= 80 ? 'text-green-600' : item.satisfaction_rate >= 50 ? 'text-yellow-600' : 'text-red-600'}`}>
-                    {item.satisfaction_rate.toFixed(1)}%
+                <span className={`font-semibold ${(item.avgSatisfaction || 0) >= 80 ? 'text-green-600' : (item.avgSatisfaction || 0) >= 50 ? 'text-yellow-600' : 'text-red-600'}`}>
+                    {(item.avgSatisfaction || 0).toFixed(1)}%
                 </span>
             ),
         },
@@ -146,46 +149,46 @@ const Analytics: React.FC = () => {
             key: 'score',
             label: 'Score',
             render: (item: TopAgent) => (
-                <span className="font-semibold text-primary">{item.score.toFixed(1)}</span>
+                <span className="font-semibold text-primary">{(item.avgSatisfaction || 0).toFixed(1)}</span>
             ),
         },
     ];
 
     const modelUsageColumns = [
         {
-            key: 'model_name',
+            key: 'model',
             label: 'Model',
             render: (item: ModelUsage) => (
-                <span className="font-mono text-sm">{item.model_name}</span>
+                <span className="font-mono text-sm">{item.model}</span>
             ),
         },
         {
-            key: 'total_requests',
+            key: 'usageCount',
             label: 'Requests',
             render: (item: ModelUsage) => (
-                <span>{item.total_requests.toLocaleString()}</span>
+                <span>{item.usageCount.toLocaleString()}</span>
             ),
         },
         {
-            key: 'total_tokens',
-            label: 'Tokens',
+            key: 'totalCost',
+            label: 'Total Cost',
             render: (item: ModelUsage) => (
-                <span>{item.total_tokens.toLocaleString()}</span>
+                <span>${item.totalCost.toFixed(4)}</span>
             ),
         },
         {
-            key: 'avg_latency_ms',
+            key: 'avgResponseTime',
             label: 'Avg Latency',
             render: (item: ModelUsage) => (
-                <span>{item.avg_latency_ms.toFixed(0)}ms</span>
+                <span>{(item.avgResponseTime || 0).toFixed(0)}ms</span>
             ),
         },
         {
-            key: 'success_rate',
-            label: 'Success Rate',
+            key: 'avgSatisfaction',
+            label: 'Satisfaction',
             render: (item: ModelUsage) => (
-                <span className={`font-semibold ${item.success_rate >= 95 ? 'text-green-600' : 'text-yellow-600'}`}>
-                    {item.success_rate.toFixed(1)}%
+                <span className={`font-semibold ${(item.avgSatisfaction || 0) >= 80 ? 'text-green-600' : 'text-yellow-600'}`}>
+                    {(item.avgSatisfaction || 0).toFixed(1)}%
                 </span>
             ),
         },
@@ -296,9 +299,9 @@ const Analytics: React.FC = () => {
                             {topAgents.length > 0 ? (
                                 topAgents.slice(0, 3).map((agent, idx) => (
                                     <div key={idx} className="flex justify-between items-center p-3 rounded-lg bg-green-500/5">
-                                        <span className="text-sm">{agent.agent_name}</span>
+                                        <span className="text-sm">{agent.agentName}</span>
                                         <span className="text-xs px-2 py-1 rounded-full bg-green-500/20 text-green-700 dark:text-green-400">
-                                            {agent.satisfaction_rate.toFixed(0)}% satisfaction
+                                            {(agent.avgSatisfaction || 0).toFixed(0)}% satisfaction
                                         </span>
                                     </div>
                                 ))
