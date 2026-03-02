@@ -78,24 +78,25 @@ export const defaultVectorConfig: VectorConfig = {
   // EMBEDDING CONFIGURATIONS
   // ========================
   embedding: {
-    // Model settings
-    modelName: 'BAAI/bge-m3',
+    // Model settings — multilingual-e5-large: confirmed working on HF router, 1024 dims
+    // Note: BAAI/bge-m3 endpoint is broken on HF free tier as of 2026-03
+    modelName: 'intfloat/multilingual-e5-large',
     dimensions: 1024,
     provider: 'HuggingFace',
 
     // Processing limits
-    maxBatchSize: 15, // Increased from 10 for better performance
+    maxBatchSize: 8,      // Stable batch size for HF free tier
     maxTextLength: 8192,
     chunkSize: 4000,
     chunkOverlap: 500,
 
     // Retry and rate limiting
     retryAttempts: 3,
-    retryDelay: 1000,
-    rateLimitDelay: 100,
+    retryDelay: 5000,     // 5s between retries (was 1s — too fast for free tier)
+    rateLimitDelay: 500,  // 500ms between batches
 
     // Processing parameters
-    sentenceSearchRange: 200,         // Character range for sentence boundary search
+    sentenceSearchRange: 200,
   },
 
   // ========================

@@ -1,4 +1,4 @@
-import { HfInference } from "@huggingface/inference";
+import axios from "axios";
 import { logger } from "../../../utils/logger";
 import HttpException from "../../../exceptions/HttpException";
 import { delay, createBatches } from "../../../utils/common.util";
@@ -15,7 +15,8 @@ import { vectorConfig } from "../../../config/vector.config";
  * - Better multilingual support
  */
 class BGEM3EmbeddingService {
-  private hf: HfInference;
+  // Using axios directly — HF SDK featureExtraction endpoint is deprecated/broken as of 2026-03
+  private readonly HF_URL = `https://router.huggingface.co/hf-inference/models/${vectorConfig.embedding.modelName}`;
   private readonly MODEL_NAME = vectorConfig.embedding.modelName;
   private readonly MAX_BATCH_SIZE = vectorConfig.embedding.maxBatchSize;
   private readonly MAX_TEXT_LENGTH = vectorConfig.embedding.maxTextLength;
@@ -24,7 +25,6 @@ class BGEM3EmbeddingService {
   private readonly CHUNK_SIZE = vectorConfig.embedding.chunkSize;
   private readonly CHUNK_OVERLAP = vectorConfig.embedding.chunkOverlap;
 
-  // Model information constant
   private readonly MODEL_INFO = {
     name: this.MODEL_NAME,
     dimensions: vectorConfig.embedding.dimensions,
@@ -36,8 +36,6 @@ class BGEM3EmbeddingService {
     if (!process.env.HUGGINGFACE_TOKEN) {
       throw new Error("HUGGINGFACE_TOKEN environment variable is required");
     }
-
-    this.hf = new HfInference(process.env.HUGGINGFACE_TOKEN);
     logger.info("🤖 BGE-M3 Embedding Service initialized");
   }
 
@@ -132,54 +130,49 @@ class BGEM3EmbeddingService {
    */
   private async generateEmbeddingWithRetry(text: string, attempt: number = 1): Promise<number[]> {
     try {
-      // AbortController timeout — prevents indefinite hang on HuggingFace cold start
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60_000); // 60-second timeout per call
+      // multilingual-e5-large requires 'passage:' prefix for stored documents
+      const prefixedText = `passage: ${text}`;
 
-      let response: any;
-      try {
-        response = await this.hf.featureExtraction({
-          model: this.MODEL_NAME,
-          inputs: text,
-          provider: "hf-inference",
-          signal: controller.signal,
-          endpointUrl: `https://router.huggingface.co/hf-inference/pipeline/feature-extraction/${this.MODEL_NAME}`,
-        } as any);
-      } finally {
-        clearTimeout(timeoutId);
+      const response = await axios.post(
+        this.HF_URL,
+        { inputs: [prefixedText], options: { wait_for_model: true } },
+        {
+          headers: {
+            Authorization: `Bearer ${process.env.HUGGINGFACE_TOKEN}`,
+            'Content-Type': 'application/json',
+          },
+          timeout: 90_000, // 90-second hard timeout
+        }
+      );
+
+      const data: any[] = response.data;
+      if (!Array.isArray(data) || data.length === 0) {
+        throw new Error('Invalid embedding response format');
       }
 
-      // Handle different response formats
-      let embedding: number[];
-
-      if (Array.isArray(response)) {
-        // If response is array of arrays, take first
-        embedding = Array.isArray(response[0]) ? (response[0] as number[]) : (response as number[]);
-      } else {
-        // If response is single array or number, handle appropriately
-        embedding = response as number[];
+      // Handle token-level (mean pool) or sentence-level embeddings
+      const item = data[0];
+      if (Array.isArray(item[0])) {
+        const dims = item[0].length;
+        const avg = new Array(dims).fill(0);
+        for (const vec of item) for (let i = 0; i < dims; i++) avg[i] += (vec[i] as number);
+        return avg.map((v: number) => v / item.length);
       }
-
-      if (!embedding || !Array.isArray(embedding)) {
-        throw new Error("Invalid embedding response format");
-      }
-
-      return embedding;
+      return item as number[];
 
     } catch (error: any) {
-      const isModelLoading = error?.message?.includes('loading') || error?.status === 503;
-      const isTimeout = error?.name === 'AbortError';
+      const isLoading = error?.response?.status === 503;
+      const isTimeout = error?.code === 'ECONNABORTED';
+      const msg = error?.response?.data?.error || error.message;
 
-      logger.warn(`⚠️ BGE-M3 embedding attempt ${attempt} failed: ${isTimeout ? 'TIMEOUT (60s)' : isModelLoading ? 'MODEL_LOADING' : error.message}`);
+      logger.warn(`⚠️ Embedding attempt ${attempt} failed: ${isTimeout ? 'TIMEOUT' : isLoading ? 'MODEL_LOADING' : msg}`);
 
       if (attempt < this.RETRY_ATTEMPTS) {
-        // Wait longer if model is loading (30s), otherwise standard backoff
-        const waitMs = isModelLoading ? 30_000 : this.RETRY_DELAY * attempt;
+        const waitMs = isLoading ? 30_000 : this.RETRY_DELAY * attempt;
         logger.info(`⏳ Waiting ${waitMs}ms before retry ${attempt + 1}/${this.RETRY_ATTEMPTS}...`);
         await delay(waitMs);
         return this.generateEmbeddingWithRetry(text, attempt + 1);
       }
-
       throw error;
     }
   }
