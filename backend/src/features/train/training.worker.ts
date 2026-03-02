@@ -5,6 +5,7 @@ import {
   TrainingJobResult,
   TRAINING_QUEUE_NAME,
   MAX_CONCURRENT_JOBS,
+  JOB_TIMEOUT,
 } from "./queue";
 import { AgentTrainingService } from "./services/agent-training.service";
 import { SourceExtractorService } from "../source/services/source-extractor.service";
@@ -58,6 +59,7 @@ export const createTrainingWorker = (): Worker<
   const worker = new Worker<TrainingJobData, TrainingJobResult>(
     TRAINING_QUEUE_NAME,
     async (job: Job<TrainingJobData>): Promise<TrainingJobResult> => {
+
       const { agentId, userId, totalSources } = job.data;
 
       logger.info(
@@ -153,6 +155,8 @@ export const createTrainingWorker = (): Worker<
     {
       connection: redisClient,
       concurrency: MAX_CONCURRENT_JOBS,
+      lockDuration: JOB_TIMEOUT,       // Max time a job can run (matches JOB_TIMEOUT env var, default 5 min)
+      lockRenewTime: JOB_TIMEOUT / 4,  // Renew lock every 75s to prevent premature expiry during embedding
     }
   );
 

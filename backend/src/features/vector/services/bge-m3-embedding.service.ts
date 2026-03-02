@@ -132,11 +132,22 @@ class BGEM3EmbeddingService {
    */
   private async generateEmbeddingWithRetry(text: string, attempt: number = 1): Promise<number[]> {
     try {
-      const response = await this.hf.featureExtraction({
-        model: this.MODEL_NAME,
-        inputs: text,
-        provider: "hf-inference",
-      } as any);
+      // AbortController timeout — prevents indefinite hang on HuggingFace cold start
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 60_000); // 60-second timeout per call
+
+      let response: any;
+      try {
+        response = await this.hf.featureExtraction({
+          model: this.MODEL_NAME,
+          inputs: text,
+          provider: "hf-inference",
+          signal: controller.signal,
+          endpointUrl: `https://router.huggingface.co/hf-inference/pipeline/feature-extraction/${this.MODEL_NAME}`,
+        } as any);
+      } finally {
+        clearTimeout(timeoutId);
+      }
 
       // Handle different response formats
       let embedding: number[];
@@ -155,17 +166,24 @@ class BGEM3EmbeddingService {
 
       return embedding;
 
-    } catch (error) {
-      logger.warn(`⚠️ BGE-M3 embedding attempt ${attempt} failed:`, error.message);
+    } catch (error: any) {
+      const isModelLoading = error?.message?.includes('loading') || error?.status === 503;
+      const isTimeout = error?.name === 'AbortError';
+
+      logger.warn(`⚠️ BGE-M3 embedding attempt ${attempt} failed: ${isTimeout ? 'TIMEOUT (60s)' : isModelLoading ? 'MODEL_LOADING' : error.message}`);
 
       if (attempt < this.RETRY_ATTEMPTS) {
-        await delay(this.RETRY_DELAY * attempt);
+        // Wait longer if model is loading (30s), otherwise standard backoff
+        const waitMs = isModelLoading ? 30_000 : this.RETRY_DELAY * attempt;
+        logger.info(`⏳ Waiting ${waitMs}ms before retry ${attempt + 1}/${this.RETRY_ATTEMPTS}...`);
+        await delay(waitMs);
         return this.generateEmbeddingWithRetry(text, attempt + 1);
       }
 
       throw error;
     }
   }
+
 
   /**
    * Get model information
