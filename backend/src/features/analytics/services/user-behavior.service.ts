@@ -88,9 +88,26 @@ class UserBehaviorService {
       const mostActiveHour = Object.entries(hourlyActivity)
         .sort(([, a], [, b]) => (b as number) - (a as number))[0]?.[0] || "0";
 
+      // Count total questions asked (chat_message_send events)
+      const total_questions = eventTypeCounts["chat_message_send"] || 0;
+
+      // Calculate average response time from chat_analytics table
+      let avgResponseQuery = DB("chat_analytics")
+        .where("user_id", userId)
+        .whereNotNull("response_time_ms")
+        .avg("response_time_ms as avg_response_time_ms")
+        .first();
+
+      const avgResponseResult = await avgResponseQuery;
+      const avg_response_time_ms = avgResponseResult?.avg_response_time_ms
+        ? Math.round(Number(avgResponseResult.avg_response_time_ms))
+        : null;
+
       const engagement = {
         userId,
         totalActivities,
+        total_questions,
+        avg_response_time_ms,
         uniqueActiveDays: uniqueDays,
         dailyActivityAverage: Math.round(dailyActivityAvg * 100) / 100,
         mostActiveHour: parseInt(mostActiveHour as string),
@@ -102,6 +119,8 @@ class UserBehaviorService {
         userId,
         engagementScore: engagement.engagementScore,
         totalActivities,
+        total_questions,
+        avg_response_time_ms,
       });
 
       return engagement;

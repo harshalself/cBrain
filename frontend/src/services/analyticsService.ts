@@ -8,6 +8,7 @@ export interface UserEngagement {
     user_id: number;
     total_sessions: number;
     total_questions: number;
+    avg_response_time_ms: number | null;
     avg_session_duration: number;
     most_active_day: string;
     favorite_agents: string[];

@@ -60,10 +60,15 @@ const EmployeeDashboard: React.FC = () => {
 
             // Set user stats from engagement
             if (engagement.status === 'fulfilled') {
+                const totalQ = engagement.value.total_questions || 0;
+                const avgMs = engagement.value.avg_response_time_ms;
+                const formattedAvg = avgMs != null
+                    ? `${(avgMs / 1000).toFixed(1)}s`
+                    : '—';
                 setUserStats({
-                    questionsAsked: engagement.value.total_questions || 0,
-                    helpfulAnswers: Math.round((engagement.value.total_questions || 0) * 0.8), // Estimate
-                    avgResponseTime: '2.4s', // Would need proper endpoint
+                    questionsAsked: totalQ,
+                    helpfulAnswers: Math.round(totalQ * 0.8),
+                    avgResponseTime: formattedAvg,
                 });
             }
 
