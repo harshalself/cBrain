@@ -1,5 +1,11 @@
 # Agent Feature Testing - Quick Start Guide
 
+npx ts-node tests/test-hr-policy.ts && \
+npx ts-node tests/test-engineering-onboarding.ts && \
+npx ts-node tests/test-it-support.ts && \
+npx ts-node tests/test-office-facilities.ts && \
+npx ts-node tests/test-sales-playbook.ts
+
 ## Prerequisites Setup
 
 Before running the agent feature tests, you need to set up test credentials.

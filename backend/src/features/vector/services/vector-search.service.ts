@@ -5,11 +5,18 @@ import { chatbotIndex } from "../../../utils/pinecone";
 import RerankerService from "./reranker.service";
 import unifiedCacheService from "./unified-cache.service";
 import SimplifiedPineconeHybridSearchService from "./simplified-pinecone-hybrid.service";
-import BGEM3EmbeddingService from "./bge-m3-embedding.service";
+import { Pinecone } from "@pinecone-database/pinecone";
 import type { RecordMetadata } from "@pinecone-database/pinecone";
 import { vectorConfig } from "../../../config/vector.config";
 import { searchConfig } from "../../../config/search.config";
 import { VectorUtils } from "../vector.utils";
+
+// Pinecone client for fast query embedding via inference API (~200ms vs HuggingFace's 30-90s)
+const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY! });
+
+// In-memory embedding cache — avoids repeat API calls for same query text
+const queryEmbeddingCache = new Map<string, { embedding: number[]; expiresAt: number }>();
+const QUERY_EMBEDDING_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
 
 // Define the structure of Pinecone search records
 interface PineconeRecord {
@@ -24,7 +31,44 @@ interface PineconeRecord {
 class VectorSearchService {
   private rerankerService = new RerankerService();
   private simplifiedPineconeHybridService = new SimplifiedPineconeHybridSearchService();
-  private bgeM3Service = new BGEM3EmbeddingService();
+
+  /**
+   * Generate query embedding using Pinecone Inference API (fast, ~200ms)
+   * Replaces HuggingFace free-tier embedding which took 30-90s on cold start
+   */
+  private async getQueryEmbedding(query: string): Promise<number[]> {
+    // Check cache first
+    const cacheKey = query.trim().substring(0, 512);
+    const cached = queryEmbeddingCache.get(cacheKey);
+    if (cached && cached.expiresAt > Date.now()) {
+      logger.debug(`⚡ Query embedding cache HIT`);
+      return cached.embedding;
+    }
+
+    const startMs = Date.now();
+    // Use Pinecone inference — same multilingual-e5-large model, but served via Pinecone (fast)
+    const result = await pc.inference.embed(
+      "multilingual-e5-large",
+      [`query: ${query}`],
+      { inputType: "query", truncate: "END" }
+    );
+
+    const embeddingResult = result as any;
+    const embedding = embeddingResult?.[0]?.values || embeddingResult?.data?.[0]?.values;
+    if (!embedding || embedding.length === 0) {
+      throw new HttpException(500, "Failed to generate query embedding via Pinecone inference");
+    }
+
+    logger.info(`🔤 Query embedding via Pinecone inference: ${Date.now() - startMs}ms`);
+
+    // Cache it
+    queryEmbeddingCache.set(cacheKey, {
+      embedding: embedding as number[],
+      expiresAt: Date.now() + QUERY_EMBEDDING_CACHE_TTL,
+    });
+
+    return embedding as number[];
+  }
 
   /**
    * Enhanced semantic search with semantic chunk metadata
@@ -64,8 +108,8 @@ class VectorSearchService {
         filter.sourceType = { $eq: options.sourceType };
       }
 
-      // Generate BGE-M3 embedding for the query
-      const queryEmbedding = await this.bgeM3Service.embedText(query);
+      // Generate query embedding via Pinecone Inference API (fast, ~200ms)
+      const queryEmbedding = await this.getQueryEmbedding(query);
 
       // Use regular query with pre-computed BGE-M3 embedding
       const pineconeResponse = await namespace.query({

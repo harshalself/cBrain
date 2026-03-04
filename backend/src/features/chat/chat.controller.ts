@@ -54,12 +54,23 @@ class ChatController {
         throw new HttpException(400, "Invalid agent ID");
       }
 
+      // Track client disconnect — prevents ghost processing when frontend times out
+      let clientDisconnected = false;
+      req.on("close", () => {
+        clientDisconnected = true;
+      });
+
       const chatData: AgentChatDto = req.body;
       const result = await this.chatService.handleAgentChat(
         agentId,
         userId,
         chatData
       );
+
+      // Don't send response if client already disconnected
+      if (clientDisconnected) {
+        return;
+      }
 
       res.status(200).json(
         ResponseUtil.success("Agent chat processed successfully", result)

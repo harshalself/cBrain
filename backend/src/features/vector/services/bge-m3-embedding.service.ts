@@ -25,6 +25,11 @@ class BGEM3EmbeddingService {
   private readonly CHUNK_SIZE = vectorConfig.embedding.chunkSize;
   private readonly CHUNK_OVERLAP = vectorConfig.embedding.chunkOverlap;
 
+  // In-memory embedding cache — eliminates HuggingFace cold-start penalty (10-30s) on repeat queries
+  // Shared across all service instances (process-level singleton)
+  private static embeddingCache = new Map<string, { embedding: number[]; expiresAt: number }>();
+  private static readonly EMBEDDING_CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
   private readonly MODEL_INFO = {
     name: this.MODEL_NAME,
     dimensions: vectorConfig.embedding.dimensions,
@@ -53,27 +58,41 @@ class BGEM3EmbeddingService {
       // Clean whitespace
       const cleanedText = text.replace(/\s+/g, ' ').trim();
 
+      // Check in-memory cache first — avoids HuggingFace cold-start (10-30s) on repeated queries
+      const cacheKey = cleanedText.substring(0, 512); // Use first 512 chars as key
+      const cached = BGEM3EmbeddingService.embeddingCache.get(cacheKey);
+      if (cached && cached.expiresAt > Date.now()) {
+        logger.debug(`⚡ Embedding cache HIT for text (${cleanedText.length} chars)`);
+        return cached.embedding;
+      }
+
+      let embedding: number[];
+
       // For short texts, process directly
       if (cleanedText.length <= this.MAX_TEXT_LENGTH) {
         logger.debug(`🔤 Generating BGE-M3 embedding for text (${cleanedText.length} chars)`);
-        return await this.generateEmbeddingWithRetry(cleanedText);
+        embedding = await this.generateEmbeddingWithRetry(cleanedText);
+      } else {
+        // For long texts, use chunking strategy
+        logger.debug(` Long document detected (${cleanedText.length} chars), using chunking strategy`);
+        const chunks = this.createTextChunks(cleanedText);
+        logger.debug(`Split into ${chunks.length} chunks for processing`);
+
+        const chunkEmbeddings = await Promise.all(
+          chunks.map(chunk => this.generateEmbeddingWithRetry(chunk))
+        );
+
+        embedding = this.averageEmbeddings(chunkEmbeddings);
+        logger.debug(`✅ Generated averaged BGE-M3 embedding from ${chunks.length} chunks`);
       }
 
-      // For long texts, use chunking strategy
-      logger.debug(` Long document detected (${cleanedText.length} chars), using chunking strategy`);
-      const chunks = this.createTextChunks(cleanedText);
-      logger.debug(`� Split into ${chunks.length} chunks for processing`);
+      // Store in cache
+      BGEM3EmbeddingService.embeddingCache.set(cacheKey, {
+        embedding,
+        expiresAt: Date.now() + BGEM3EmbeddingService.EMBEDDING_CACHE_TTL,
+      });
 
-      // Generate embeddings for all chunks
-      const chunkEmbeddings = await Promise.all(
-        chunks.map(chunk => this.generateEmbeddingWithRetry(chunk))
-      );
-
-      // Average the embeddings to create a single representative embedding
-      const averagedEmbedding = this.averageEmbeddings(chunkEmbeddings);
-
-      logger.debug(`✅ Generated averaged BGE-M3 embedding from ${chunks.length} chunks`);
-      return averagedEmbedding;
+      return embedding;
 
     } catch (error) {
       logger.error("❌ BGE-M3 embedding generation failed:", error);

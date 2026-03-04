@@ -87,8 +87,8 @@ class ChatContextService {
       searchQueries.push(...extractedTerms.filter(term => term && term.length > 2));
     }
 
-    // Limit to prevent too many queries (performance)
-    return searchQueries.slice(0, 5);
+    // Limit to 2 queries max: original + 1 variation (performance: reduces Pinecone calls from 4-5x to 2x)
+    return searchQueries.slice(0, 2);
   }
 
   /**

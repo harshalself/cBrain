@@ -95,14 +95,14 @@ export const defaultSearchConfig: SearchConfig = {
     // Chat layer specific settings
     chat: {
       context: {
-        maxContextChars: 4000,
+        maxContextChars: 2000, // Reduced from 4000 to cut LLM inference time
         previewMaxChars: 1200,
         textPreviewLength: 200,
-        maxResultsToUse: 15, // Capture more results
+        maxResultsToUse: 8, // Reduced from 15; deduplication keeps quality high
         rerankedUseTopN: 5,
       },
       vectorSearch: {
-        topK: 25,
+        topK: 15, // Reduced from 25 to cut Pinecone retrieval time
         minSimilarity: 0.10, // Lower barrier to prevent dropping exact matches with low semantic similarity
         rerankTopN: 10,
         rerankThreshold: 0.35,

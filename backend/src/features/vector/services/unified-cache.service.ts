@@ -75,10 +75,9 @@ class UnifiedCacheService {
     // Cache queries that are:
     // 1. Not personalized
     // 2. At least 20 characters (substantial queries)
-    // 3. Not questions (questions are often unique)
-    return !hasPersonalization &&
-           query.length >= 20 &&
-           !normalizedQuery.includes('?');
+    // NOTE: Removed '?' exclusion — user questions always end with '?' so that rule
+    //       was preventing 100% of chat queries from being cached (always MISS in logs).
+    return !hasPersonalization && query.length >= 20;
   }
 
   /**

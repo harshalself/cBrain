@@ -1,7 +1,6 @@
 import DB from "../../../../database/index.schema";
 import { logger } from "../../../utils/logger";
-import { EVENT_TYPES } from "../analytics.interface";
-import AnalyticsEventService from "./analytics-event.service";
+
 
 /**
  * Model Usage Analytics Service
@@ -73,7 +72,6 @@ export interface OptimizationRecommendations {
 }
 
 class ModelUsageAnalyticsService {
-  private analyticsEventService = new AnalyticsEventService();
 
   /**
    * Track model usage for analytics
@@ -87,20 +85,7 @@ class ModelUsageAnalyticsService {
     agentId?: number
   ): Promise<void> {
     try {
-      await this.analyticsEventService.trackUserActivity({
-        userId: agentId || 0, // System user if no specific agent
-        eventType: EVENT_TYPES.API_REQUEST,
-        eventData: {
-          modelId,
-          provider,
-          tokens,
-          cost,
-          responseTime,
-          agentId,
-          timestamp: new Date(),
-        },
-      });
-
+      // Log model usage directly — trackUserActivity is for real users, not agent IDs
       logger.info("🤖 Model usage tracked", {
         modelId,
         provider,
@@ -126,14 +111,14 @@ class ModelUsageAnalyticsService {
 
       // Get cost breakdown by model
       const modelBreakdown = await this.getModelCostBreakdown(startDate, endDate);
-      
+
       // Get cost trends over time
       const costTrends = await this.getCostTrends(startDate, endDate);
-      
+
       // Calculate totals
       const totalCost = modelBreakdown.reduce((sum, model) => sum + model.totalCost, 0);
       const totalTokens = modelBreakdown.reduce((sum, model) => sum + model.totalTokens, 0);
-      
+
       // Generate optimization recommendations
       const optimization = await this.generateCostOptimizations(modelBreakdown);
 
@@ -169,10 +154,10 @@ class ModelUsageAnalyticsService {
 
       // Get performance metrics for each model
       const modelMetrics = await this.getModelPerformanceMetrics(startDate, endDate);
-      
+
       // Generate performance comparisons
       const performanceComparison = await this.compareModelPerformance(modelMetrics);
-      
+
       // Generate recommendations
       const recommendations = this.generateModelRecommendations(performanceComparison);
 
@@ -222,10 +207,10 @@ class ModelUsageAnalyticsService {
 
       // Analyze current performance
       const currentPerformance = this.analyzeAgentUsagePatterns(agentUsage);
-      
+
       // Get model performance data for comparison
       const modelPerformance = await this.analyzeModelPerformance('30d');
-      
+
       // Generate optimization recommendations
       const recommendations = this.generateAgentOptimizations(
         currentPerformance,
@@ -269,11 +254,11 @@ class ModelUsageAnalyticsService {
 
       if (startDate && endDate) {
         query = query.where("chat_analytics.created_at", ">=", startDate)
-                    .where("chat_analytics.created_at", "<=", endDate);
+          .where("chat_analytics.created_at", "<=", endDate);
       }
 
       const usageStats = await query.groupBy("agents.model", "agents.provider")
-                                   .orderBy("usage_count", "desc");
+        .orderBy("usage_count", "desc");
 
       const summary = {
         totalModels: usageStats.length,
@@ -340,7 +325,7 @@ class ModelUsageAnalyticsService {
 
     if (startDate && endDate) {
       query = query.where("chat_analytics.created_at", ">=", startDate)
-                  .where("chat_analytics.created_at", "<=", endDate);
+        .where("chat_analytics.created_at", "<=", endDate);
     }
 
     const costData = await query
@@ -373,7 +358,7 @@ class ModelUsageAnalyticsService {
 
     if (startDate && endDate) {
       query = query.where("created_at", ">=", startDate)
-                  .where("created_at", "<=", endDate);
+        .where("created_at", "<=", endDate);
     }
 
     const trendData = await query
@@ -405,7 +390,7 @@ class ModelUsageAnalyticsService {
 
     if (startDate && endDate) {
       query = query.where("chat_analytics.created_at", ">=", startDate)
-                  .where("chat_analytics.created_at", "<=", endDate);
+        .where("chat_analytics.created_at", "<=", endDate);
     }
 
     const performanceData = await query
@@ -431,7 +416,7 @@ class ModelUsageAnalyticsService {
       const usageScore = Math.min((metric.totalUsage / 10) * 10, 50); // Usage popularity
 
       const performanceScore = (responseScore * 0.4 + satisfactionScore * 0.4 + usageScore * 0.2);
-      
+
       // Calculate cost efficiency (higher is better)
       const costEfficiency = metric.avgCost > 0 ? satisfactionScore / metric.avgCost : 0;
 
@@ -498,10 +483,10 @@ class ModelUsageAnalyticsService {
     modelPerformance: ModelPerformanceReport
   ): ModelRecommendations {
     const bestModel = modelPerformance.performanceComparison[0];
-    
+
     // Simple optimization logic
     const potentialSavings = Math.max(0, currentPerformance.avgCost - (bestModel?.costEfficiency || 0));
-    
+
     return {
       optimalModel: bestModel?.model || "groq-llama3-8b",
       costSavings: potentialSavings,

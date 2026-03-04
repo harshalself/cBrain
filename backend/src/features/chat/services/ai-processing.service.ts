@@ -41,7 +41,13 @@ class AiProcessingService {
       return encryption.decryptApiKey(agent.encrypted_api_key, agent.encryption_salt);
     });
 
+    // Fallback to env var if agent's DB key is missing — for dev/single-tenant setups
     if (!apiKey || apiKey.trim().length === 0) {
+      const envKey = agent.provider?.toLowerCase() === 'groq' ? process.env.GROQ_API_KEY : undefined;
+      if (envKey && envKey.trim().length > 0) {
+        logger.info(`🔑 Using GROQ_API_KEY from env for agent ${agentId} (no DB key set)`);
+        return envKey.trim();
+      }
       logger.error(`Empty or invalid API key for agent ${agentId}`);
       throw new HttpException(400, "Invalid or missing API key. Please update your agent's API key.");
     }

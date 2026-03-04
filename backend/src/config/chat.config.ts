@@ -138,7 +138,7 @@ export const defaultChatConfig: ChatConfig = {
     // General error messages
     generalRateLimitMessage: "Rate limit exceeded. Please try again later.",
     emptyResponseMessage: "No response generated. This may be due to API key issues, content filtering, or model limitations. Please check your configuration.",
-    requestTimeout: 15000, // 15 seconds timeout
+    requestTimeout: 45000, // 45s — raised from 15s; Groq can take 15-20s under throttle/load
   },
 
   // ========================

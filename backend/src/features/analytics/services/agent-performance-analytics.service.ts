@@ -1,7 +1,6 @@
 import DB from "../../../../database/index.schema";
 import { logger } from "../../../utils/logger";
-import { EVENT_TYPES } from "../analytics.interface";
-import AnalyticsEventService from "./analytics-event.service";
+
 
 /**
  * Agent Performance Analytics Service
@@ -46,7 +45,6 @@ export interface SatisfactionTrendData {
 }
 
 class AgentPerformanceAnalyticsService {
-  private analyticsEventService = new AnalyticsEventService();
 
   /**
    * Generate comprehensive performance report for an agent
@@ -110,19 +108,7 @@ class AgentPerformanceAnalyticsService {
     cost: number
   ): Promise<void> {
     try {
-      await this.analyticsEventService.trackUserActivity({
-        userId: agentId, // Using agentId as identifier
-        eventType: EVENT_TYPES.AGENT_TRAIN_COMPLETE,
-        eventData: {
-          agentId,
-          model,
-          provider,
-          tokens,
-          cost,
-          timestamp: new Date(),
-        },
-      });
-
+      // Log agent cost directly — trackUserActivity is for real users, not agent IDs
       logger.info("💰 Agent costs tracked", {
         agentId,
         model,
@@ -290,8 +276,6 @@ class AgentPerformanceAnalyticsService {
     startDate?: Date,
     endDate?: Date
   ): Promise<{ totalChats: number; totalMessages: number; avgResponseTime: number }> {
-    console.log(`🔍 Querying chat stats for agent ${agentId}${startDate && endDate ? ` from ${startDate} to ${endDate}` : ' (all time)'}`);
-
     let query = DB("chat_analytics")
       .where("agent_id", agentId)
       .count("* as total_chats")
@@ -304,17 +288,11 @@ class AgentPerformanceAnalyticsService {
 
     const stats = await query.first();
 
-    console.log(`📊 Raw stats result:`, stats);
-
-    const result = {
+    return {
       totalChats: parseInt(stats.total_chats) || 0,
       totalMessages: parseInt(stats.total_messages) || 0,
       avgResponseTime: parseFloat(stats.avg_response_time) || 0,
     };
-
-    console.log(`📈 Processed stats:`, result);
-
-    return result;
   }
 
   private async calculateCostAnalysis(
