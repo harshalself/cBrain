@@ -99,18 +99,6 @@ const DocumentPicker: React.FC<DocumentPickerProps> = ({
                                     <span className="text-[10px] px-1.5 py-0.5 bg-green-500/10 text-green-500 border border-green-500/20 rounded-full font-bold">
                                         Linked
                                     </span>
-                                    <button
-                                        type="button"
-                                        onClick={(e) => {
-                                            e.stopPropagation();
-                                            onUnlinkDoc(doc.id);
-                                        }}
-                                        disabled={isTraining || isActivelyTraining}
-                                        className="h-7 w-7 flex items-center justify-center rounded-lg bg-destructive/10 text-destructive hover:bg-destructive hover:text-destructive-foreground transition-colors disabled:opacity-50"
-                                        title="Unlink document"
-                                    >
-                                        <Unlink className="w-3.5 h-3.5" />
-                                    </button>
                                 </div>
                             )}
                         </div>

@@ -119,13 +119,21 @@ export const createTrainingWorker = (): Worker<
         await sourceExtractorService.markSourcesAsEmbedded(sourceIds);
         await job.updateProgress(90);
 
+        // Calculate the absolute total embedded sources
+        const embeddedSourcesResult = await DB("sources")
+          .where({ agent_id: agentId, is_deleted: false, is_embedded: true })
+          .count("id as count")
+          .first();
+
+        const absoluteEmbeddedSources = parseInt(embeddedSourcesResult?.count as string) || 0;
+
         // Step 5: Update agent training status and embedded sources count
         await trainingService.updateAgentTrainingStatus(
           agentId,
           "completed",
           100,
           null,
-          extractedSources.length
+          absoluteEmbeddedSources
         );
         await job.updateProgress(100);
 

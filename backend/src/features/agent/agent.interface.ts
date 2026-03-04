@@ -1,8 +1,8 @@
 export interface IAgent {
   id: number;
   name: string;
-  encrypted_api_key: string;
-  encryption_salt: string;
+  encrypted_api_key?: string;
+  encryption_salt?: string;
   is_active: number;
   model: string;
   temperature: number;
@@ -27,7 +27,7 @@ export interface IAgent {
 export interface CreateAgentRequest {
   name: string;
   provider: string;
-  api_key: string;
+  api_key?: string;
   model?: string;
   temperature?: number;
   system_prompt?: string;

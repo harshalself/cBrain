@@ -123,14 +123,22 @@ export class SourceExtractorService {
             );
           } else {
             logger.warn(
-              `⚠️ No content found for ${source.source_type} source ${source.id}`
+              `⚠️ No content found for ${source.source_type} source ${source.id} — marking as failed`
             );
+            // Mark source as failed so it won't be retried every training run
+            await knex("sources")
+              .where({ id: source.id })
+              .update({ status: "failed", updated_at: new Date() });
           }
         } catch (error) {
           logger.error(
             `❌ Failed to extract from ${source.source_type} source ${source.id}:`,
             error
           );
+          // Mark source as failed so it won't be retried every training run
+          await knex("sources")
+            .where({ id: source.id })
+            .update({ status: "failed", updated_at: new Date() });
           // Continue with other sources even if one fails
         }
       }

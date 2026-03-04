@@ -17,9 +17,9 @@ export class CreateAgentDto {
   @IsString()
   provider: string;
 
+  @IsOptional()
   @IsString()
-  @MinLength(1, { message: "API key is required" })
-  api_key: string; // This will be encrypted before storage
+  api_key?: string; // This will be encrypted before storage
 
   @IsOptional()
   @IsString()
@@ -54,7 +54,6 @@ export class UpdateAgentDto {
 
   @IsOptional()
   @IsString()
-  @MinLength(1, { message: "API key cannot be empty" })
   api_key?: string; // This will be encrypted before storage
 
   @IsOptional()

@@ -4,10 +4,10 @@ import { MessageCircle, ChevronDown, Maximize2, Send, Loader2, Brain } from 'luc
 import { cn } from '@/lib/utils';
 import { useAuth } from '@/contexts/AuthContext';
 import chatService, { ChatMessage, ChatSessionWithSummary } from '@/services/chatService';
+import agentService from '@/services/agentService';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-
-const DEFAULT_AGENT_ID = 1;
+import { toast } from 'sonner';
 
 export const ChatbotWidget: React.FC = () => {
     const { user } = useAuth();
@@ -20,6 +20,7 @@ export const ChatbotWidget: React.FC = () => {
     const [isLoading, setIsLoading] = useState(false);
     const [activeSession, setActiveSession] = useState<ChatSessionWithSummary | null>(null);
     const [messages, setMessages] = useState<ChatMessage[]>([]);
+    const [agentId, setAgentId] = useState<number | null>(null);
 
     // Refs
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -42,8 +43,20 @@ export const ChatbotWidget: React.FC = () => {
     const initializeChat = async () => {
         try {
             setIsLoading(true);
+
+            // Get active agent first
+            let currentAgentId: number;
+            try {
+                const agent = await agentService.getActiveAgent();
+                currentAgentId = agent.id;
+                setAgentId(currentAgentId);
+            } catch (err: any) {
+                console.warn('No active agent configured');
+                return;
+            }
+
             // Get recent sessions
-            const sessions = await chatService.getSessions(DEFAULT_AGENT_ID);
+            const sessions = await chatService.getSessions(currentAgentId);
 
             if (sessions.length > 0) {
                 // Use the most recent session
@@ -55,7 +68,7 @@ export const ChatbotWidget: React.FC = () => {
                 setMessages(history);
             } else {
                 // Create new session if none exist
-                const newSession = await chatService.createSession(DEFAULT_AGENT_ID);
+                const newSession = await chatService.createSession(currentAgentId);
                 setActiveSession(newSession);
                 setMessages([]);
             }
@@ -68,7 +81,7 @@ export const ChatbotWidget: React.FC = () => {
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!question.trim() || !activeSession || isSending) return;
+        if (!question.trim() || !activeSession || !agentId || isSending) return;
 
         const userMessageContent = question.trim();
         setQuestion('');
@@ -92,28 +105,41 @@ export const ChatbotWidget: React.FC = () => {
             }));
 
             // Send to API
-            const response = await chatService.sendMessage(DEFAULT_AGENT_ID, {
+            const response = await chatService.sendMessage(agentId, {
                 messages: [
                     ...messageHistory,
                     { role: 'user', content: userMessageContent }
                 ],
                 sessionId: activeSession.id.toString(),
                 sourceSelection: 'auto',
-                searchStrategy: 'simple_hybrid',
-                enableReranking: true
+                searchStrategy: 'simple_hybrid'
             });
 
-            // Add AI response
+            // Replace the temporary user message ID with real DB ID
+            setMessages(prev => prev.map(m =>
+                m.id === tempUserMessage.id
+                    ? { ...m, id: response.userMessageId }
+                    : m
+            ));
+
+            // Add AI response using real DB ID
             const aiMessage: ChatMessage = {
-                id: Date.now() + 1,
+                id: response.assistantMessageId,
                 session_id: activeSession.id,
                 role: 'assistant',
                 content: response.response,
                 created_at: new Date().toISOString(),
             };
             setMessages(prev => [...prev, aiMessage]);
-        } catch (error) {
+        } catch (error: any) {
             console.error('Failed to send message:', error);
+
+            let errorMsg = error.response?.data?.message || 'Failed to send message';
+            if (error.code === 'ECONNABORTED' || error.response?.status === 504) {
+                errorMsg = 'The request timed out. The AI is taking longer than expected to respond. Please try again.';
+            }
+            toast.error(errorMsg);
+
             // Remove the temporary message on failure
             setMessages(prev => prev.filter(m => m.id !== tempUserMessage.id));
             setQuestion(userMessageContent); // Restore input

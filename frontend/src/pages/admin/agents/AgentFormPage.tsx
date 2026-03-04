@@ -4,7 +4,7 @@ import { DashboardHeader } from '@/components/dashboard/DashboardHeader';
 import { useAuth } from '@/contexts/AuthContext';
 import agentService from '@/services/agentService';
 import documentService, { Document } from '@/services/documentService';
-import { CreateAgentDto, UpdateAgentDto, TrainingStatusResponse } from '@/types/agent.types';
+import { CreateAgentDto, UpdateAgentDto, TrainingStatusResponse, SIEMENS_DEFAULT_PROMPT } from '@/types/agent.types';
 import { ArrowLeft, Loader2, Bot, BookOpen, Settings } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -20,10 +20,9 @@ const DEFAULT_FORM_DATA: FormData = {
     name: '',
     description: '',
     provider: 'groq',
-    api_key: '',
     model: '',
     temperature: 0.7,
-    system_prompt: '',
+    system_prompt: SIEMENS_DEFAULT_PROMPT,
     is_active: true,
 };
 
@@ -117,7 +116,6 @@ const AgentFormPage: React.FC = () => {
                 name: agent.name,
                 description: agent.description || '',
                 provider: agent.provider,
-                api_key: '',
                 model: agent.model,
                 temperature: Number(agent.temperature ?? 0.7),
                 system_prompt: agent.system_prompt,
@@ -191,7 +189,6 @@ const AgentFormPage: React.FC = () => {
         const newErrors: FormErrors = {};
         if (!formData.name.trim()) newErrors.name = 'Agent name is required';
         if (!formData.provider) newErrors.provider = 'Provider is required';
-        if (!isEditMode && !formData.api_key.trim()) newErrors.api_key = 'API key is required';
         if (!formData.model) newErrors.model = 'Model is required';
         if (formData.temperature < 0 || formData.temperature > 1)
             newErrors.temperature = 'Temperature must be between 0 and 1';
@@ -212,13 +209,12 @@ const AgentFormPage: React.FC = () => {
                     temperature: formData.temperature, system_prompt: formData.system_prompt,
                     is_active: formData.is_active ? 1 : 0,
                 };
-                if (formData.api_key.trim()) updateData.api_key = formData.api_key;
                 await agentService.updateAgent(parseInt(id), updateData);
                 toast.success('Agent updated successfully');
             } else {
                 const createData: CreateAgentDto = {
                     name: formData.name, description: formData.description,
-                    provider: formData.provider, api_key: formData.api_key,
+                    provider: formData.provider,
                     model: formData.model, temperature: formData.temperature,
                     system_prompt: formData.system_prompt, is_active: formData.is_active ? 1 : 0,
                 };

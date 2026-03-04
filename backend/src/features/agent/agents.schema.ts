@@ -21,8 +21,8 @@ export const createTable = async () => {
       .defaultTo(
         "You are a helpful AI assistant. Provide accurate, informative responses while being concise and clear."
       );
-    table.text("encrypted_api_key").notNullable(); // Encrypted API key
-    table.text("encryption_salt").notNullable(); // Salt for encryption
+    table.text("encrypted_api_key").nullable(); // Encrypted API key
+    table.text("encryption_salt").nullable(); // Salt for encryption
     table.integer("is_active").defaultTo(1); // Default to active
     table.timestamp("trained_on").defaultTo(DB.fn.now()); // When the agent was trained
     table.string("training_status", 20).defaultTo("idle"); // idle, pending, in-progress, completed, failed

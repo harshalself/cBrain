@@ -43,9 +43,8 @@ export interface RetentionMetrics {
     daily_active_users: number;
     weekly_active_users: number;
     monthly_active_users: number;
-    retention_rate_7d: number;
-    retention_rate_30d: number;
-    churn_rate: number;
+    stickiness: number;
+    wow_growth: number;
 }
 
 export interface AgentPerformance {

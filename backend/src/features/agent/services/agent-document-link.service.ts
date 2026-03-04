@@ -76,9 +76,30 @@ class AgentDocumentLinkService {
                         .whereIn("id", sourcesToDelete)
                         .update({
                             is_deleted: true,
+                            is_embedded: false,
                             deleted_by: userId,
                             deleted_at: trx.fn.now(),
                         });
+
+                    // Clean up vectors from Pinecone for removed sources
+                    try {
+                        const { chatbotIndex } = require("../../../utils/pinecone");
+                        const namespaceName = `user_${userId}_agent_${agentId}`;
+                        const namespace = chatbotIndex.namespace(namespaceName);
+
+                        const vectorIds: string[] = [];
+                        for (const sourceId of sourcesToDelete) {
+                            for (let i = 0; i < 200; i++) {
+                                vectorIds.push(`${sourceId}_chunk_${i}`);
+                            }
+                        }
+                        if (vectorIds.length > 0) {
+                            await namespace.deleteMany(vectorIds);
+                            logger.info(`🗑️ Deleted vectors for ${sourcesToDelete.length} unlinked sources from Pinecone`);
+                        }
+                    } catch (vecError) {
+                        logger.warn(`⚠️ Failed to clean up vectors for removed sources:`, vecError);
+                    }
 
                     logger.info(`Soft-deleted ${sourcesToDelete.length} sources`);
                 }
@@ -174,6 +195,7 @@ class AgentDocumentLinkService {
     }
     /**
      * Unlink a specific document from an agent (Soft delete the source)
+     * Also cleans up associated vectors from Pinecone
      */
     public async unlinkDocumentFromAgent(
         agentId: number,
@@ -204,9 +226,37 @@ class AgentDocumentLinkService {
                 .where({ id: source.id })
                 .update({
                     is_deleted: true,
+                    is_embedded: false,
                     deleted_by: userId,
                     deleted_at: knex.fn.now(),
                 });
+
+            // Clean up vectors from Pinecone for this source
+            if (source.is_embedded) {
+                try {
+                    const { chatbotIndex } = require("../../../utils/pinecone");
+                    const namespaceName = `user_${userId}_agent_${agentId}`;
+                    const namespace = chatbotIndex.namespace(namespaceName);
+
+                    // Get total chunks count to build vector IDs
+                    // Vector IDs follow pattern: {sourceId}_chunk_{index}
+                    const stats = await chatbotIndex.describeIndexStats();
+                    const nsRecordCount = stats.namespaces?.[namespaceName]?.recordCount || 0;
+
+                    if (nsRecordCount > 0) {
+                        // Build vector IDs for this source (up to 200 chunks max)
+                        const vectorIds: string[] = [];
+                        for (let i = 0; i < 200; i++) {
+                            vectorIds.push(`${source.id}_chunk_${i}`);
+                        }
+                        await namespace.deleteMany(vectorIds);
+                        logger.info(`🗑️ Deleted vectors for source ${source.id} from namespace ${namespaceName}`);
+                    }
+                } catch (vecError) {
+                    logger.warn(`⚠️ Failed to clean up vectors for unlinked source ${source.id}:`, vecError);
+                    // Don't throw — the source is already unlinked
+                }
+            }
 
             logger.info(`Successfully unlinked document ${documentId} from agent ${agentId}`);
         } catch (error) {

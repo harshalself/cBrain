@@ -2,19 +2,56 @@ import { IVectorRecord } from "../vector.interface";
 import HttpException from "../../../exceptions/HttpException";
 import { logger } from "../../../utils/logger";
 import { chatbotIndex } from "../../../utils/pinecone";
-import BGEM3EmbeddingService from "./bge-m3-embedding.service";
-import { vectorConfig } from "../../../config/vector.config";
+import { Pinecone } from "@pinecone-database/pinecone";
 import { VectorUtils } from "../vector.utils";
+
+// Pinecone client for fast embedding via inference API (~200ms vs HuggingFace's 30-90s)
+const pc = new Pinecone({ apiKey: process.env.PINECONE_API_KEY! });
 
 /**
  * Service responsible for basic vector operations (CRUD)
  */
 class VectorOperationsService {
-  private bgeM3Service = new BGEM3EmbeddingService();
+
+  /**
+   * Generate embeddings for a batch of texts using Pinecone Inference API
+   * Processes in sub-batches of 96 (API limit) with document prefix
+   */
+  private async generateEmbeddings(texts: string[]): Promise<number[][]> {
+    const BATCH_SIZE = 96;
+    const allEmbeddings: number[][] = [];
+
+    for (let i = 0; i < texts.length; i += BATCH_SIZE) {
+      const batch = texts.slice(i, i + BATCH_SIZE);
+      const prefixedBatch = batch.map(t => `passage: ${t}`);
+
+      const startMs = Date.now();
+      const result = await pc.inference.embed(
+        "multilingual-e5-large",
+        prefixedBatch,
+        { inputType: "passage", truncate: "END" }
+      );
+
+      const embeddingResult = result as any;
+      const embeddings: number[][] = [];
+      for (let j = 0; j < batch.length; j++) {
+        const vec = embeddingResult?.[j]?.values || embeddingResult?.data?.[j]?.values;
+        if (!vec || vec.length === 0) {
+          throw new HttpException(500, `Failed to generate embedding for text ${i + j} via Pinecone inference`);
+        }
+        embeddings.push(vec as number[]);
+      }
+
+      allEmbeddings.push(...embeddings);
+      logger.info(`📐 Batch ${Math.floor(i / BATCH_SIZE) + 1}: embedded ${batch.length} texts in ${Date.now() - startMs}ms`);
+    }
+
+    return allEmbeddings;
+  }
 
   /**
    * Upsert records into a specific namespace with proper user-agent isolation
-   * Now uses BGE-M3 embeddings instead of Pinecone's inference API
+   * Uses Pinecone Inference API for fast, reliable embeddings (~200ms per batch)
    */
   public async upsertRecords(
     records: IVectorRecord[],
@@ -33,13 +70,15 @@ class VectorOperationsService {
       logger.info(`🔀 Using namespace: ${namespaceName}`);
       const namespace = chatbotIndex.namespace(namespaceName);
 
-      logger.info(`📤 Generating BGE-M3 embeddings for ${records.length} records to ${namespaceName}`);
+      logger.info(`📤 Generating embeddings via Pinecone inference for ${records.length} records to ${namespaceName}`);
 
-      // Generate embeddings for all text content using BGE-M3
+      // Generate embeddings using fast Pinecone Inference API
       const texts = records.map(record => record.text);
-      const embeddings = await this.bgeM3Service.embedTexts(texts);
+      const startMs = Date.now();
+      const embeddings = await this.generateEmbeddings(texts);
+      logger.info(`✅ All ${embeddings.length} embeddings generated in ${Date.now() - startMs}ms`);
 
-      // Create Pinecone vector records with BGE-M3 embeddings
+      // Create Pinecone vector records with pre-computed embeddings
       const pineconeVectors = records.map((record, index) => ({
         id: record._id,
         values: embeddings[index],
@@ -67,7 +106,7 @@ class VectorOperationsService {
       // Use regular upsert with pre-computed embeddings
       await namespace.upsert(pineconeVectors);
 
-      logger.info(`✅ Successfully upserted ${records.length} records with BGE-M3 embeddings`);
+      logger.info(`✅ Successfully upserted ${records.length} records via Pinecone inference`);
     } catch (error: unknown) {
       logger.error(`❌ Error upserting records:`, error);
       if (error instanceof HttpException) throw error;

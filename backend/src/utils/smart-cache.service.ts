@@ -25,17 +25,28 @@ interface CacheEntry<T> {
  */
 export class SmartCacheService {
   private namespace: CacheNamespace;
-  private l1Cache: Map<string, CacheEntry<any>>;
+  // Use a static map to share L1 caches across all instances of SmartCacheService
+  private static globalL1Caches: Map<string, Map<string, CacheEntry<any>>> = new Map();
   private sizeLimit: number;
   private defaultTTL: number;
   private keyPrefix: string;
 
   constructor(namespace: CacheNamespace) {
     this.namespace = namespace;
-    this.l1Cache = new Map();
+
+    // Initialize the shared map for this namespace if it doesn't exist
+    if (!SmartCacheService.globalL1Caches.has(namespace)) {
+      SmartCacheService.globalL1Caches.set(namespace, new Map());
+    }
+
     this.sizeLimit = getSizeLimit(namespace);
     this.defaultTTL = getTTL(namespace);
     this.keyPrefix = getKeyPrefix(namespace);
+  }
+
+  // Helper to access this namespace's specific L1 map
+  private get l1Cache(): Map<string, CacheEntry<any>> {
+    return SmartCacheService.globalL1Caches.get(this.namespace)!;
   }
 
   /**

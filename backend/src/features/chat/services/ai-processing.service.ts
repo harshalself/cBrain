@@ -38,6 +38,9 @@ class AiProcessingService {
    */
   public async getDecryptedApiKey(agent: any, agentId: number, userId: number): Promise<string> {
     const apiKey = await apiKeyCacheService.getOrDecrypt(agentId, userId, async () => {
+      if (!agent.encrypted_api_key || !agent.encryption_salt) {
+        return "";
+      }
       return encryption.decryptApiKey(agent.encrypted_api_key, agent.encryption_salt);
     });
 

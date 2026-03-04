@@ -199,9 +199,16 @@ const AskBrain: React.FC = () => {
                 searchStrategy: 'simple_hybrid'
             });
 
-            // Add AI response to messages
+            // Replace the temporary user message ID with real DB ID
+            setMessages(prev => prev.map(m =>
+                m.id === tempUserMessage.id
+                    ? { ...m, id: response.userMessageId }
+                    : m
+            ));
+
+            // Add AI response to messages using real DB ID
             const aiMessage: ChatMessage = {
-                id: Date.now() + 1, // temporary ID
+                id: response.assistantMessageId,
                 session_id: activeSession.id,
                 role: 'assistant',
                 content: response.response,

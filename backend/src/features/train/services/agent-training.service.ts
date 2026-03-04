@@ -27,9 +27,9 @@ export class AgentTrainingService {
         throw new HttpException(400, "Agent is already being trained");
       }
 
-      // Get total sources count for this agent that are ready to be embedded
+      // Get count of pending sources to train
       // Sources with status 'pending' or 'completed' but not yet embedded
-      const totalSourcesResult = await knex("sources")
+      const pendingSourcesResult = await knex("sources")
         .where({
           agent_id: agentId,
           is_deleted: false,
@@ -39,22 +39,29 @@ export class AgentTrainingService {
         .count("id as count")
         .first();
 
-      const totalSources = parseInt(totalSourcesResult?.count as string) || 0;
+      const pendingSourcesCount = parseInt(pendingSourcesResult?.count as string) || 0;
 
-      if (totalSources === 0) {
+      if (pendingSourcesCount === 0) {
         throw new HttpException(
           400,
           "No sources ready for embedding found for this agent. Sources must be uploaded (status: pending/completed) and not yet embedded."
         );
       }
 
-      // Update agent status to pending
+      // Get absolute total sources for this agent
+      const absoluteTotalResult = await knex("sources")
+        .where({ agent_id: agentId, is_deleted: false })
+        .count("id as count")
+        .first();
+
+      const absoluteTotalSources = parseInt(absoluteTotalResult?.count as string) || 0;
+
+      // Update agent status to pending (do NOT reset embedded_sources_count)
       await knex("agents").where({ id: agentId }).update({
         training_status: "pending",
         training_progress: 0,
         training_error: null,
-        embedded_sources_count: 0,
-        total_sources_count: totalSources,
+        total_sources_count: absoluteTotalSources,
       });
 
       // Add training job to queue
@@ -63,7 +70,7 @@ export class AgentTrainingService {
         {
           agentId,
           userId,
-          totalSources,
+          totalSources: pendingSourcesCount,
         },
         {
           attempts: 3,
@@ -83,7 +90,7 @@ export class AgentTrainingService {
       return {
         success: true,
         jobId: job.id,
-        totalSources,
+        totalSources: pendingSourcesCount,
         message: "Training started successfully",
       };
     } catch (error) {
@@ -155,6 +162,15 @@ export class AgentTrainingService {
         }
       }
 
+      // Calculate actual totals from breakdown to ensure accuracy
+      let actualTotalSources = 0;
+      let actualEmbeddedSources = 0;
+
+      Object.values(sourcesBreakdown).forEach((typeData: any) => {
+        actualTotalSources += typeData.total;
+        actualEmbeddedSources += typeData.embedded;
+      });
+
       return {
         agent: {
           id: agent.id,
@@ -171,11 +187,11 @@ export class AgentTrainingService {
           }
           : null,
         sources: {
-          total: agent.total_sources_count,
-          embedded: agent.embedded_sources_count,
+          total: actualTotalSources,
+          embedded: actualEmbeddedSources,
           pending: Math.max(
             0,
-            agent.total_sources_count - agent.embedded_sources_count
+            actualTotalSources - actualEmbeddedSources
           ),
           breakdown: sourcesBreakdown,
           details: sourceDetails,
@@ -281,8 +297,8 @@ export class AgentTrainingService {
   }
 
   /**
-   * Get training metrics and statistics with enhanced vector service integration
-   */
+ * Get training metrics and statistics with enhanced vector service integration
+ */
   private async getTrainingMetrics(agentId: number, userId: number) {
     // 1. Prepare all database queries
     const queries = [
@@ -321,13 +337,14 @@ export class AgentTrainingService {
 
     const embeddedCount = Number(embeddedSources?.total || 0);
 
-    // 3. Conditional external service call (Pinecone)
-    // ONLY call Pinecone if we actually have embedded sources to avoid unnecessary RTT
+    // 3. Get vector count directly from Pinecone stats (avoids creating VectorService + BGEM3 init)
     let vectorCount = 0;
     if (embeddedCount > 0) {
       try {
-        const vectorService = new VectorService();
-        vectorCount = await vectorService.getVectorCount(userId, agentId);
+        const { chatbotIndex: idx } = require("../../../utils/pinecone");
+        const namespaceName = `user_${userId}_agent_${agentId}`;
+        const stats = await idx.describeIndexStats();
+        vectorCount = stats.namespaces?.[namespaceName]?.recordCount || 0;
       } catch (error) {
         logger.warn(`⚠️ Could not get vector count from Pinecone:`, error);
       }

@@ -55,6 +55,8 @@ export interface SendMessageRequest {
 
 export interface SendMessageResponse {
     sessionId: number;
+    userMessageId: number;
+    assistantMessageId: number;
     response: string;
     sources?: Array<{
         title: string;

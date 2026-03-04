@@ -193,7 +193,7 @@ class ChatProcessorService {
       // PHASE 2: Sequential operations that depend on Phase 1 results
       const phase2Start = Date.now();
       // Save user message (depends on session)
-      await this.chatSessionService.saveMessage(
+      const savedUserMessage = await this.chatSessionService.saveMessage(
         session.id,
         userMessage.content,
         "user",
@@ -240,7 +240,7 @@ class ChatProcessorService {
 
       // PHASE 4: Save AI response and return result
       // Save AI response (final sequential operation)
-      await this.chatSessionService.saveMessage(
+      const savedAssistantMessage = await this.chatSessionService.saveMessage(
         session.id,
         fullResponse,
         "assistant",
@@ -282,6 +282,8 @@ class ChatProcessorService {
         model: agent.model,
         provider: agent.provider,
         sessionId: session.id,
+        userMessageId: savedUserMessage.id,
+        assistantMessageId: savedAssistantMessage.id,
         agentId: agent.id,
         agentName: agent.name,
         contextUsed: !!(relevantContext && relevantContext.length > 0),

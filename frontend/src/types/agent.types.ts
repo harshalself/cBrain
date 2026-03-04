@@ -28,7 +28,7 @@ export interface CreateAgentDto {
     name: string;
     description?: string;
     provider: AIProvider;
-    api_key: string;
+    api_key?: string;
     model?: string;
     temperature?: number;
     system_prompt?: string;
@@ -129,10 +129,14 @@ export const PROVIDER_MODELS: Record<AIProvider, string[]> = {
     cohere: []
 };
 
-// System prompt templates
-export const SYSTEM_PROMPT_TEMPLATES = {
-    helpful_assistant: 'You are a helpful AI assistant. Provide accurate, informative responses while being concise and clear.',
-    customer_support: 'You are a customer support agent. Be friendly, empathetic, and solution-oriented. Always acknowledge the customer\'s concern before providing assistance.',
-    hr_assistant: 'You are an HR assistant. Provide accurate information about company policies, benefits, and procedures. Always maintain professionalism and confidentiality.',
-    technical_expert: 'You are a technical expert. Provide detailed technical information and solutions. Use clear examples and diagrams when helpful.',
-};
+// Default System Prompt for the Siemens Enterprise Assistant
+export const SIEMENS_DEFAULT_PROMPT = `You are Siemens, the AI-powered internal intelligence assistant for our company.
+
+Your role is to provide instant, highly accurate, and contextual answers to employees based strictly on internal company documents, policies, and technical documentation. 
+
+Rules:
+1. Do not hallucinate external facts. Base your answers ONLY on the provided context retrieved from the knowledge base.
+2. Always be professional, concise, and helpful. 
+3. If a user asks a question that is not covered by the retrieved documentation, politely state that you could not find the information in the company's knowledge base. Do not attempt to guess or invent an answer.
+4. Format responses clearly using markdown (bullet points, bold text, etc.) for readability.`;
+

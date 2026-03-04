@@ -1,7 +1,7 @@
 import React from 'react';
 import { Loader2, Save } from 'lucide-react';
 import { FormData, FormErrors } from '../types';
-import { AIProvider, SYSTEM_PROMPT_TEMPLATES } from '@/types/agent.types';
+import { AIProvider } from '@/types/agent.types';
 
 interface AgentConfigFormProps {
     formData: FormData;
@@ -18,10 +18,6 @@ const AgentConfigForm: React.FC<AgentConfigFormProps> = ({
     formData, errors, isLoading, isEditMode, availableModels,
     onInputChange, onSubmit, onCancel,
 }) => {
-    const applyTemplate = (templateKey: keyof typeof SYSTEM_PROMPT_TEMPLATES) => {
-        onInputChange('system_prompt', SYSTEM_PROMPT_TEMPLATES[templateKey]);
-    };
-
     return (
         <form onSubmit={onSubmit} className="max-w-5xl">
             <div className="glass rounded-3xl p-8 space-y-10 border border-border/50 shadow-2xl">
@@ -102,21 +98,6 @@ const AgentConfigForm: React.FC<AgentConfigFormProps> = ({
                             {errors.provider && <p className="text-xs text-destructive mt-1 px-1 font-medium">{errors.provider}</p>}
                         </div>
 
-                        {/* API Key */}
-                        <div className="space-y-2">
-                            <label className="text-sm font-semibold text-foreground/80 px-1">
-                                API Key {!isEditMode && <span className="text-destructive">*</span>}
-                            </label>
-                            <input
-                                type="password"
-                                value={formData.api_key}
-                                onChange={(e) => onInputChange('api_key', e.target.value)}
-                                className={`w-full h-[46px] px-4 bg-secondary/20 border ${errors.api_key ? 'border-destructive' : 'border-border'} rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/50 transition-all font-mono text-sm placeholder:text-muted-foreground/50`}
-                                placeholder={isEditMode ? '••••••••••••••••' : 'Enter API key'}
-                            />
-                            {errors.api_key && <p className="text-xs text-destructive mt-1 px-1 font-medium">{errors.api_key}</p>}
-                        </div>
-
                         {/* Model */}
                         <div className="space-y-2">
                             <label className="text-sm font-semibold text-foreground/80 px-1">
@@ -137,7 +118,7 @@ const AgentConfigForm: React.FC<AgentConfigFormProps> = ({
                         </div>
 
                         {/* Temperature */}
-                        <div className="space-y-2">
+                        <div className="space-y-2 md:col-span-2 max-w-md">
                             <div className="flex justify-between items-center px-1">
                                 <label className="text-sm font-semibold text-foreground/80">Temperature (Creativity)</label>
                                 <span className="text-sm font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-lg border border-primary/20">
@@ -168,17 +149,6 @@ const AgentConfigForm: React.FC<AgentConfigFormProps> = ({
                         <div className="flex items-center gap-2">
                             <div className="w-1 h-6 bg-primary rounded-full" />
                             <h3 className="text-xl font-bold text-foreground">System Prompt</h3>
-                        </div>
-                        <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-hide">
-                            {Object.keys(SYSTEM_PROMPT_TEMPLATES).map((key) => (
-                                <button
-                                    key={key} type="button"
-                                    onClick={() => applyTemplate(key as keyof typeof SYSTEM_PROMPT_TEMPLATES)}
-                                    className="whitespace-nowrap px-4 py-2 text-xs font-bold bg-secondary/30 hover:bg-primary hover:text-primary-foreground rounded-xl transition-all border border-border/50 capitalize shadow-sm"
-                                >
-                                    {key.replace(/_/g, ' ')}
-                                </button>
-                            ))}
                         </div>
                     </div>
                     <div className="space-y-2">

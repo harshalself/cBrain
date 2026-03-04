@@ -352,13 +352,14 @@ class UserBehaviorService {
   }
 
   /**
-   * Get Platform Overview Metrics (DAU, WAU, Retention)
+   * Get Platform Overview Metrics (DAU, WAU, Stickiness, WoW Growth)
    */
   public async getPlatformOverviewMetrics(): Promise<any> {
     try {
       const now = new Date();
       const oneDayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
       const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      const fourteenDaysAgo = new Date(now.getTime() - 14 * 24 * 60 * 60 * 1000);
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
       // Calculate DAU
@@ -375,6 +376,14 @@ class UserBehaviorService {
         .first();
       const wau = Number(wauResult?.count || 0);
 
+      // Calculate Previous WAU (7-14 days ago) for Growth
+      const prevWauResult = await DB("user_activity_events")
+        .where("created_at", ">=", fourteenDaysAgo)
+        .where("created_at", "<", sevenDaysAgo)
+        .countDistinct("user_id as count")
+        .first();
+      const prevWau = Number(prevWauResult?.count || 0);
+
       // Calculate MAU
       const mauResult = await DB("user_activity_events")
         .where("created_at", ">=", thirtyDaysAgo)
@@ -382,19 +391,23 @@ class UserBehaviorService {
         .first();
       const mau = Number(mauResult?.count || 0);
 
-      // Calculate total users
-      const totalUsersResult = await DB("users").count("id as count").first();
-      const totalUsers = Number(totalUsersResult?.count || 0);
+      // Stickiness (DAU/MAU ratio) - Highly dynamic metric measuring daily engagement
+      const stickiness = mau > 0 ? (dau / mau) * 100 : 0;
 
-      // Simple retention and churn calculation
-      const retentionRate7d = totalUsers > 0 ? (wau / totalUsers) * 100 : 0;
-      const churnRate = totalUsers > 0 ? ((totalUsers - mau) / totalUsers) * 100 : 0;
+      // WoW Growth Rate - Highly dynamic metric measuring expansion
+      // If prevWau is 0 but we have users now, that's 100% growth
+      let wowGrowth = 0;
+      if (prevWau > 0) {
+        wowGrowth = ((wau - prevWau) / prevWau) * 100;
+      } else if (wau > 0) {
+        wowGrowth = 100;
+      }
 
       return {
         daily_active_users: dau,
         weekly_active_users: wau,
-        retention_rate_7d: Math.round(retentionRate7d * 100) / 100,
-        churn_rate: Math.round(churnRate * 100) / 100,
+        stickiness: Math.round(stickiness * 100) / 100,
+        wow_growth: Math.round(wowGrowth * 100) / 100,
       };
     } catch (error: any) {
       logger.error("❌ Failed to get platform overview metrics", { error: error.message });
