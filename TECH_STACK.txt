@@ -1,0 +1,299 @@
+================================================================
+  Siemens — AI-Powered Internal Knowledge Platform
+  COMPLETE TECHNOLOGY & TOOLS STACK
+================================================================
+
+================================================================
+  PROGRAMMING LANGUAGES
+================================================================
+  - TypeScript (primary language for both frontend and backend)
+  - JavaScript (ES2017+ / ESNext)
+  - HTML5
+  - CSS3
+
+================================================================
+  RUNTIME & PACKAGE MANAGERS
+================================================================
+  - Node.js (runtime for backend)
+  - npm (package manager — backend)
+  - Bun (package manager — frontend, bun.lockb present)
+
+================================================================
+  BACKEND FRAMEWORK & CORE LIBRARIES
+================================================================
+  - Express.js v5 (HTTP server / REST API framework)
+  - ts-node (TypeScript execution for Node.js)
+  - nodemon (hot-reload dev server, configured via nodemon.json)
+  - cross-env (cross-platform environment variable setting)
+  - dotenv (environment variable loading)
+  - envalid (environment variable validation)
+  - compression (HTTP response compression)
+  - cors (Cross-Origin Resource Sharing middleware)
+  - cookie-parser (cookie parsing middleware)
+  - helmet (HTTP security headers)
+  - hpp (HTTP Parameter Pollution protection)
+  - morgan (HTTP request logger)
+  - express-rate-limit (API rate limiting)
+
+================================================================
+  FRONTEND FRAMEWORK & CORE LIBRARIES
+================================================================
+  - React 18 (UI framework)
+  - React DOM 18
+  - React Router DOM v6 (client-side routing)
+  - Vite v5 (build tool and dev server)
+    - @vitejs/plugin-react-swc (SWC-powered fast React refresh)
+
+================================================================
+  UI COMPONENT LIBRARIES & STYLING
+================================================================
+  - shadcn/ui (component system — components.json configured)
+  - Radix UI (headless accessible primitives):
+    - accordion, alert-dialog, aspect-ratio, avatar, checkbox,
+      collapsible, context-menu, dialog, dropdown-menu, hover-card,
+      label, menubar, navigation-menu, popover, progress,
+      radio-group, scroll-area, select, separator, slider, slot,
+      switch, tabs, toast, toggle, toggle-group, tooltip
+  - Tailwind CSS v3 (utility-first CSS framework)
+    - tailwind-merge (smart class merging)
+    - tailwindcss-animate (animation utilities)
+    - @tailwindcss/typography (prose styling plugin)
+    - autoprefixer (CSS vendor prefixes)
+    - postcss (CSS processing pipeline)
+  - Framer Motion (animations & transitions)
+  - Lucide React (icon library)
+  - class-variance-authority (variant-based component styling)
+  - clsx (conditional className utility)
+  - cmdk (command palette component)
+  - vaul (drawer component)
+  - embla-carousel-react (carousel component)
+  - next-themes (dark/light mode theming)
+  - sonner (toast notification component)
+  - input-otp (OTP input component)
+  - react-resizable-panels (resizable panel layouts)
+
+================================================================
+  FORMS & VALIDATION
+================================================================
+  - React Hook Form (form state management)
+  - @hookform/resolvers (validation adapter)
+  - Zod (runtime schema validation — both frontend & backend)
+  - class-validator (decorator-based validation)
+  - class-transformer (object transformation)
+
+================================================================
+  DATA FETCHING & STATE MANAGEMENT
+================================================================
+  - TanStack Query v5 / React Query (server state, caching, API calls)
+  - Axios (HTTP client — both frontend & backend)
+  - Socket.IO Client (real-time WebSocket communication — frontend)
+
+================================================================
+  CHARTING & DATA VISUALIZATION
+================================================================
+  - Recharts (chart library for analytics dashboards)
+  - react-day-picker (calendar/date picking)
+  - date-fns (date utility library — both frontend & backend)
+
+================================================================
+  MARKDOWN / RICH TEXT RENDERING
+================================================================
+  - react-markdown (Markdown renderer)
+  - remark-gfm (GitHub Flavored Markdown plugin)
+  - nunjucks (server-side templating engine for email templates)
+
+================================================================
+  REAL-TIME COMMUNICATION
+================================================================
+  - Socket.IO v4 (WebSocket server — backend)
+  - Socket.IO Client v4 (WebSocket client — frontend)
+
+================================================================
+  AUTHENTICATION & SECURITY
+================================================================
+  - JSON Web Tokens / jsonwebtoken (JWT auth)
+  - bcrypt (password hashing)
+  - reflect-metadata (decorator metadata support)
+
+================================================================
+  DATABASE
+================================================================
+  - PostgreSQL (relational database — primary data store)
+  - Knex.js v3 (SQL query builder / schema migrations)
+  - pg (Node.js PostgreSQL client driver)
+  - Supabase (hosted PostgreSQL-as-a-service + auth + storage)
+
+================================================================
+  VECTOR DATABASE
+================================================================
+  - Pinecone (vector database for semantic search & RAG)
+    - Index name: "chatverse"
+    - Used for: document embeddings, agent knowledge retrieval
+
+================================================================
+  CACHING
+================================================================
+  - Redis (distributed cache + message broker)
+  - Two-tier SmartCache system:
+    - L1: In-memory Map (ultra-fast, per-instance)
+    - L2: Redis (persistent, cross-instance)
+
+================================================================
+  JOB QUEUES & BACKGROUND PROCESSING
+================================================================
+  - BullMQ (Redis-backed job queue)
+    - Queue: "agent-training" (async RAG training pipeline)
+    - Configurable MAX_CONCURRENT_JOBS and JOB_TIMEOUT
+
+================================================================
+  FILE STORAGE
+================================================================
+  - AWS S3 SDK (@aws-sdk/client-s3, @aws-sdk/lib-storage)
+  - Supabase Storage (S3-compatible endpoint used as backend)
+    - Endpoint: https://[project].supabase.co/storage/v1/s3
+  - Multer (multipart/form-data file upload middleware)
+  - Supported upload formats: PDF, TXT, DOC, DOCX (up to 10MB)
+
+================================================================
+  DOCUMENT PARSING & TEXT EXTRACTION
+================================================================
+  - pdf-parse (PDF text extraction)
+  - mammoth (DOCX/Word document text extraction)
+  - cheerio (HTML parsing / web scraping)
+  - mime-types (MIME type detection)
+  - jsqr (QR code reading from images)
+  - qrcode-reader (QR code decoding utility)
+
+================================================================
+  AI & MACHINE LEARNING PROVIDERS
+================================================================
+  - Vercel AI SDK ("ai" package + provider adapters):
+    - @ai-sdk/groq    → Groq (LLaMA, Mixtral models)
+    - @ai-sdk/openai  → OpenAI (GPT-4o, GPT-4, etc.)
+    - @ai-sdk/anthropic → Anthropic (Claude models)
+    - @ai-sdk/google  → Google (Gemini models)
+  - Multi-model / multi-provider support (switchable at runtime)
+  - Token cost calculation utility (token-cost-calculator.ts)
+
+================================================================
+  EMBEDDINGS & RERANKING (AI/ML)
+================================================================
+  - HuggingFace Inference API (@huggingface/inference)
+    - Embedding model: BGE-M3 (multilingual, high-quality)
+    - Reranking: BGE-M3 cross-encoder for result reranking
+    - API endpoint: router.huggingface.co/hf-inference/models/...
+  - Pinecone native reranking (fallback when HF token missing)
+
+================================================================
+  VOICE / CONVERSATIONAL AI
+================================================================
+  - ElevenLabs ConvAI (voice AI widget)
+    - Embedded as Web Component: <elevenlabs-convai>
+    - Agent ID: agent_5201kjm0yt6bej2vpzby3chmg6zn
+    - Used in Dashboard layout for voice-based interaction
+
+================================================================
+  EMAIL
+================================================================
+  - Nodemailer v7 (SMTP email sending)
+  - Nunjucks (HTML email templates/rendering)
+
+================================================================
+  LOGGING & MONITORING
+================================================================
+  - Winston (structured logging library)
+  - winston-daily-rotate-file (rotating log files per day)
+  - Morgan (HTTP request/response logging)
+  - Log levels: info, error, debug, warn
+
+================================================================
+  TESTING FRAMEWORKS & TOOLS
+================================================================
+  Backend:
+  - Jest (unit & integration test runner)
+  - Supertest (HTTP integration testing for Express)
+  - ts-node (for running TypeScript test scripts)
+
+  Frontend:
+  - Vitest (unit/component test runner — Vite-native)
+  - @testing-library/react (React component testing)
+  - @testing-library/jest-dom (DOM assertion matchers)
+  - jsdom (browser DOM emulation for Vitest)
+  - Playwright (@playwright/test) (end-to-end browser testing)
+    - Configured browser: Chromium (Desktop Chrome)
+    - Test dir: ./e2e
+    - playwright-report (HTML test reports)
+
+================================================================
+  CODE QUALITY & LINTING
+================================================================
+  - ESLint v9 (static code analysis — both frontend & backend)
+  - typescript-eslint (TypeScript-aware linting rules)
+  - eslint-plugin-react (React-specific lint rules)
+  - eslint-plugin-react-hooks (hooks rules)
+  - eslint-plugin-react-refresh (fast-refresh lint rules)
+  - Flat config format (eslint.config.mjs / eslint.config.js)
+
+================================================================
+  VERSION CONTROL & COLLABORATION
+================================================================
+  - Git (version control system)
+  - GitHub (remote repository hosting)
+    - .github/copilot-instructions.md (GitHub Copilot AI config)
+    - .gitignore configured for Node, .env, .vscode, OS files
+  - GitHub Copilot (AI coding assistant, instructions configured
+    in .github/copilot-instructions.md — 10KB of instructions)
+
+================================================================
+  DEVELOPMENT TOOLS & IDE
+================================================================
+  - VS Code (editor, .vscode directory present)
+  - nodemon (backend hot-reload in development)
+  - typescript (tsc compiler — v5.7 backend, v5.8 frontend)
+  - tsconfig (strict TypeScript config, decorators enabled)
+  - cross-env (cross-platform env vars in npm scripts)
+  - yargs (CLI argument parsing — used in scripts)
+  - copyfiles (file copy utility for postbuild steps)
+
+================================================================
+  ARCHITECTURE PATTERNS & DESIGN
+================================================================
+  - RAG (Retrieval-Augmented Generation) — core AI pattern
+  - Multi-agent architecture (configurable named AI agents)
+  - REST API (Express, versioned at /api/v1)
+  - Feature-based folder structure (backend/src/features/*)
+  - Two-tier caching (L1 in-memory + L2 Redis)
+  - Decorator-based validation (class-validator, reflect-metadata)
+  - DTO pattern (Data Transfer Objects)
+  - Repository/Service/Controller separation
+  - Background job processing (BullMQ training queue)
+  - WebSocket-based real-time updates (Socket.IO)
+  - Graceful shutdown handling
+  - JWT-based stateless auth
+
+================================================================
+  CLOUD SERVICES & INFRASTRUCTURE
+================================================================
+  - Supabase (BaaS):
+    - PostgreSQL hosting (pooled connections, port 6543)
+    - File/Object Storage (S3-compatible API)
+  - Pinecone Cloud (managed vector database)
+  - Redis (managed Redis instance — host/port/password via env)
+  - AWS S3 SDK (used via Supabase S3-compatible endpoint)
+
+================================================================
+  SECURITY LIBRARIES & PRACTICES
+================================================================
+  - Helmet (security HTTP headers)
+  - hpp (HTTP Parameter Pollution protection)
+  - express-rate-limit (brute-force protection)
+  - bcrypt (password hashing, cost factor 10+)
+  - JWT (stateless authentication tokens)
+  - CORS with allowed-origins whitelist
+  - Environment variable validation (envalid)
+  - File upload validation (type allowlist + 10MB size limit)
+  - Path traversal sanitization in file uploads
+
+================================================================
+END OF TECH STACK DOCUMENT
+================================================================
